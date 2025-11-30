@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Gemini Lyric Forge V2.2</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Info Panel styles for V3.0 UX - Lofi/Cutesy Theme */
+        .info-panel {
+            background-color: #ffe0f0; /* Muted Pink */
+            border: 2px solid #333;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 4px 4px 0 #8c7e8c;
+            font-size: 0.9em;
+            line-height: 1.4;
+            display: none; /* Hidden by default */
+        }
+        .info-panel.active { display: block; }
+        .info-panel h4 {
+            margin-top: 0;
+            color: #5d4a6f;
+            font-size: 1.1em;
+            border-bottom: 1px dashed #c4a1c6;
+            padding-bottom: 5px;
+        }
+        .info-panel ul {
+            padding-left: 20px;
+        }
+        .info-panel li {
+            margin-bottom: 5px;
+        }
+        .info-toggle {
+            background: none;
+            border: none;
+            color: #333;
+            font-weight: bold;
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 5px 0;
+            display: block;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>♊ The Gemini Lyric Forge V2.2</h1>
+        
+        <div id="dashboard-view" class="view active">
+            <h2>🔥 Today's Training</h2>
+            <div id="progress-chart">
+                <p>📈 Daily Progress Chart (F/R/P Scores) will load here.</p>
+            </div>
+            
+            <div class="module-selector">
+                <button class="drake-btn" onclick="startChallenge('drake_structure')">🎤 Start Drake Drill: Structure (F-Score)</button>
+                <button class="drake-btn" onclick="startChallenge('drake_rhythm_conv')">🥁 Start Drake Drill: Conversational Flow</button>
+                <button class="drake-btn" onclick="startChallenge('drake_rhythm_trip')">🥁 Start Drake Drill: Triplet Flow</button>
+                <button class="ocean-btn" onclick="startChallenge('ocean_poetics')">🌊 Start Ocean Opus (P-Score)</button>
+            </div>
+            
+            <p style="text-align: center; margin-top: 20px; font-size: 0.9em;">**The Synthesis Challenge:** Achieve high scores on all three modules.</p>
+        </div>
+
+        <div id="challenge-view" class="view">
+            <h2 id="challenge-title"></h2>
+            <p id="challenge-prompt" class="prompt"></p>
+            
+            <button class="info-toggle" onclick="toggleInfo()">ℹ️ How to Approach This</button>
+            
+            <div id="info-section" class="info-panel">
+                </div>
+            
+            <div class="writing-area">
+                <textarea id="lyric-input" placeholder="Start writing your lyric here..."></textarea>
+                <div class="status-bar">
+                    Bar Count: <span id="bar-count">0</span> | Lines: <span id="line-count">0</span> | Avg Syl/Line: <span id="syl-count">0</span>
+                </div>
+            </div>
+            
+            <button id="submit-btn" onclick="submitLyric()">Analyze & Score</button>
+            <button id="cancel-btn" class="secondary" onclick="showView('dashboard-view')">Cancel</button>
+        </div>
+
+        <div id="results-view" class="view">
+            <h2>✅ Analysis Complete</h2>
+            <div class="score-card">
+                <div class="score-box f-score-box">F-Score (Structure): <span id="f-score">0</span>/100</div>
+                <div class="score-box r-score-box" style="background-color: #8c7e8c;">R-Score (Rhythm/Flow): <span id="r-score">0</span>/100</div>
+                <div class="score-box p-score-box">P-Score (Poetry/Depth): <span id="p-score">0</span>/100</div>
+            </div>
+
+            <h3>Feedback:</h3>
+            <ul id="feedback-list">
+                </ul>
+
+            <button onclick="saveAndShare()">💾 Save Progress & Download Score</button>
+            <button class="secondary" onclick="showView('dashboard-view')">New Challenge</button>
+        </div>
+    </div>
+    
+    <script src="./data/lexicon.js"></script>
+    <script src="lyric-forge.js"></script>
+</body>
+</html>
