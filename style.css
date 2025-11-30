@@ -1,0 +1,141 @@
+/* style.css (Lofi/Cutesy Theme) */
+
+/* 1. Global & Reset */
+:root {
+    --color-drake: #9dd1f1; /* Muted Teal */
+    --color-ocean: #f7a399; /* Muted Pink */
+    --color-rhythm: #8c7e8c; /* Lavender */
+    --color-bg: #f9f7e8; /* Creamy White */
+    --color-text: #333;
+    --color-card: #fff;
+    --color-success: #a0f4a0; /* Soft Green */
+    --color-fail: #ffb8b8; /* Soft Red */
+    --font-handwritten: "Comic Sans MS", "Chalkboard SE", cursive, sans-serif; /* Simulating cutesy/handwritten */
+}
+
+body {
+    font-family: var(--font-handwritten);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* 2. Typography */
+h1 {
+    text-align: center;
+    color: #5d4a6f;
+    margin-bottom: 30px;
+    font-size: 2.2em;
+    text-shadow: 1px 1px 0 #ccc;
+}
+h2 {
+    border-bottom: 2px dashed #ccc;
+    padding-bottom: 10px;
+    margin-top: 25px;
+    font-size: 1.6em;
+    color: #5d4a6f;
+}
+
+/* 3. Button & Inputs (Sticker Effect) */
+button {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    border: 2px solid #333;
+    border-radius: 12px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 4px 4px 0 #333; /* Lofi Shadow */
+}
+
+button:active {
+    box-shadow: 1px 1px 0 #333;
+    transform: translate(3px, 3px);
+}
+
+.drake-btn { background-color: var(--color-drake); color: var(--color-text); }
+.ocean-btn { background-color: var(--color-ocean); color: var(--color-text); }
+.secondary {
+    background-color: #eee;
+    color: var(--color-text);
+}
+
+textarea {
+    width: 95%;
+    min-height: 200px;
+    padding: 10px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    font-size: 1em;
+    line-height: 1.5;
+    margin-bottom: 10px;
+    background-color: var(--color-card);
+    box-shadow: 2px 2px 0 #ccc;
+}
+
+/* 4. Layout & Views */
+.view { display: none; }
+.view.active { display: block; }
+
+/* 5. Status & Scores (Index Card Effect) */
+.status-bar {
+    text-align: right;
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.score-card {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.score-box {
+    flex: 1;
+    text-align: center;
+    padding: 15px 5px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: var(--color-text);
+    margin: 0 5px;
+    background-color: var(--color-card);
+    border: 2px dashed #ccc;
+}
+
+.f-score-box { border-left: 5px solid var(--color-drake); }
+.r-score-box { border-left: 5px solid var(--color-rhythm); }
+.p-score-box { border-left: 5px solid var(--color-ocean); }
+
+
+#feedback-list {
+    list-style: none;
+    padding: 0;
+}
+#feedback-list li {
+    background-color: var(--color-card);
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-size: 0.95em;
+}
+.feedback-success { background-color: var(--color-success); border-color: #333; }
+.feedback-fail { background-color: var(--color-fail); border-color: #333; }
+
+
+/* Mobile Optimization */
+@media (max-width: 400px) {
+    .score-card { flex-direction: column; }
+    .score-box { margin: 5px 0; }
+}
