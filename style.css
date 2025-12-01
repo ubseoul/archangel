@@ -1,4 +1,4 @@
-/* style.css (V4.0 - Blueprint Aesthetic) */
+/* style.css (V4.1 - Blueprint Aesthetic) */
 
 /* 1. Global & Reset */
 :root {
@@ -155,3 +155,4 @@ textarea {
     .metadata-inputs { flex-direction: column; }
     .score-box { flex: 1 1 100%; margin: 5px 0; } /* One box per row on small screens */
 }
+
