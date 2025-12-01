@@ -1,4 +1,4 @@
-/ lyric-forge.js (Finalized V4.0 - Seamless Creative Engine)
+// lyric-forge.js (Finalized V4.0 - Seamless Creative Engine)
 
 let currentChallenge = null;
 let savedProgress = JSON.parse(localStorage.getItem('lyricForgeProgress')) || [];
