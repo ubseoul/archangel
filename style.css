@@ -1,25 +1,25 @@
-/* style.css (Lofi/Cutesy Theme) */
+/* style.css (V4.0 - Blueprint Aesthetic) */
 
 /* 1. Global & Reset */
 :root {
-    --color-drake: #9dd1f1; /* Muted Teal */
-    --color-ocean: #f7a399; /* Muted Pink */
-    --color-rhythm: #8c7e8c; /* Lavender */
-    --color-bg: #f9f7e8; /* Creamy White */
-    --color-text: #333;
-    --color-card: #fff;
-    --color-success: #a0f4a0; /* Soft Green */
-    --color-fail: #ffb8b8; /* Soft Red */
-    --font-handwritten: "Comic Sans MS", "Chalkboard SE", cursive, sans-serif; /* Simulating cutesy/handwritten */
+    --color-primary: #1e3a8a; /* Deep Blue/Navy (from blueprint header) */
+    --color-accent: #f59e0b; /* Deep Yellow/Gold (from blueprint cards) */
+    --color-success: #10b981; /* Green checkmark */
+    --color-fail: #ef4444; /* Red warning */
+    --color-bg: #f3f4f6; /* Light gray background */
+    --color-card-bg: #ffffff;
+    --color-text: #1f2937; /* Dark gray text */
+    --color-muted: #6b7280; /* Muted gray text */
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 body {
-    font-family: var(--font-handwritten);
+    font-family: var(--font-sans);
     background-color: var(--color-bg);
     color: var(--color-text);
     margin: 0;
     padding: 0;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
 .container {
@@ -28,114 +28,130 @@ body {
     padding: 20px;
 }
 
-/* 2. Typography */
+/* Header & Title */
 h1 {
     text-align: center;
-    color: #5d4a6f;
-    margin-bottom: 30px;
+    color: var(--color-primary);
     font-size: 2.2em;
-    text-shadow: 1px 1px 0 #ccc;
+    margin-bottom: 5px;
+    font-weight: 800;
 }
-h2 {
-    border-bottom: 2px dashed #ccc;
-    padding-bottom: 10px;
-    margin-top: 25px;
-    font-size: 1.6em;
-    color: #5d4a6f;
+.app-subtitle {
+    text-align: center;
+    color: var(--color-muted);
+    font-size: 1em;
+    margin-bottom: 20px;
+    font-weight: 500;
 }
 
-/* 3. Button & Inputs (Sticker Effect) */
-button {
-    width: 100%;
-    padding: 15px;
-    margin: 10px 0;
-    border: 2px solid #333;
+/* 2. Card-Based Layout */
+.card {
+    background-color: var(--color-card-bg);
     border-radius: 12px;
-    font-size: 1.1em;
-    font-weight: bold;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 5px solid transparent;
+}
+.card h2 {
+    color: var(--color-primary);
+    margin-top: 0;
+    font-size: 1.5em;
+    border-bottom: none;
+}
+.card-accent { border-left-color: var(--color-accent); }
+.card-success { border-left-color: var(--color-success); }
+.card-fail { border-left-color: var(--color-fail); }
+
+
+/* 3. Module Selection & Buttons */
+.module-selector button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 600;
     cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.1s;
-    box-shadow: 4px 4px 0 #333; /* Lofi Shadow */
+    transition: background-color 0.2s, box-shadow 0.2s;
+    color: white;
 }
 
-button:active {
-    box-shadow: 1px 1px 0 #333;
-    transform: translate(3px, 3px);
-}
+.drake-btn { background-color: var(--color-primary); }
+.ocean-btn { background-color: #f472b6; /* Muted Pink */ }
+.secondary { background-color: var(--color-muted); color: white; }
 
-.drake-btn { background-color: var(--color-drake); color: var(--color-text); }
-.ocean-btn { background-color: var(--color-ocean); color: var(--color-text); }
-.secondary {
-    background-color: #eee;
-    color: var(--color-text);
+/* 4. Input & Status Area */
+.metadata-inputs {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+select, input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1em;
 }
 
 textarea {
     width: 95%;
-    min-height: 200px;
+    min-height: 180px;
     padding: 10px;
-    border: 2px solid #333;
+    border: 1px solid #d1d5db;
     border-radius: 8px;
     font-size: 1em;
     line-height: 1.5;
-    margin-bottom: 10px;
-    background-color: var(--color-card);
-    box-shadow: 2px 2px 0 #ccc;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
 }
 
-/* 4. Layout & Views */
-.view { display: none; }
-.view.active { display: block; }
-
-/* 5. Status & Scores (Index Card Effect) */
 .status-bar {
-    text-align: right;
+    display: flex;
+    justify-content: space-between;
     font-size: 0.9em;
-    color: #666;
+    color: var(--color-muted);
     margin-bottom: 15px;
 }
 
+/* 5. Score & Feedback */
 .score-card {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-top: 10px;
 }
 
 .score-box {
-    flex: 1;
+    flex: 1 1 45%; /* Two boxes per row on wider screens */
     text-align: center;
-    padding: 15px 5px;
+    padding: 15px;
+    margin: 5px;
     border-radius: 8px;
     font-weight: bold;
-    color: var(--color-text);
-    margin: 0 5px;
-    background-color: var(--color-card);
-    border: 2px dashed #ccc;
+    background-color: var(--color-card-bg);
+    border: 2px solid var(--color-muted);
 }
+.score-box strong { font-size: 1.2em; color: var(--color-primary); }
 
-.f-score-box { border-left: 5px solid var(--color-drake); }
-.r-score-box { border-left: 5px solid var(--color-rhythm); }
-.p-score-box { border-left: 5px solid var(--color-ocean); }
-
-
-#feedback-list {
-    list-style: none;
-    padding: 0;
-}
-#feedback-list li {
-    background-color: var(--color-card);
+.feedback-item {
     padding: 10px;
-    margin-bottom: 8px;
-    border-radius: 5px;
-    border: 1px solid #ddd;
+    margin: 8px 0;
+    border-radius: 8px;
     font-size: 0.95em;
+    border-left: 5px solid transparent;
 }
-.feedback-success { background-color: var(--color-success); border-color: #333; }
-.feedback-fail { background-color: var(--color-fail); border-color: #333; }
+.feedback-success { background-color: #ecfdf5; border-left-color: var(--color-success); }
+.feedback-fail { background-color: #fee2e2; border-left-color: var(--color-fail); }
 
+/* Utility Classes */
+.hidden { display: none !important; }
+.text-center { text-align: center; }
 
-/* Mobile Optimization */
-@media (max-width: 400px) {
-    .score-card { flex-direction: column; }
-    .score-box { margin: 5px 0; }
+@media (max-width: 450px) {
+    .metadata-inputs { flex-direction: column; }
+    .score-box { flex: 1 1 100%; margin: 5px 0; } /* One box per row on small screens */
 }
