@@ -3,82 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Gemini Lyric Forge V2.2</title>
+    <title>The Gemini Lyric Forge V4.0</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Info Panel styles for V3.0 UX - Lofi/Cutesy Theme */
+        /* Specific Styles for Info Panel (Minimalist) */
         .info-panel {
-            background-color: #ffe0f0; /* Muted Pink */
-            border: 2px solid #333;
+            background-color: #f0f7ff; 
+            border: 1px solid #c8d9e6;
             padding: 15px;
             margin: 15px 0;
             border-radius: 8px;
-            box-shadow: 4px 4px 0 #8c7e8c;
             font-size: 0.9em;
             line-height: 1.4;
-            display: none; /* Hidden by default */
+            display: none; 
         }
         .info-panel.active { display: block; }
-        .info-panel h4 {
-            margin-top: 0;
-            color: #5d4a6f;
-            font-size: 1.1em;
-            border-bottom: 1px dashed #c4a1c6;
-            padding-bottom: 5px;
-        }
-        .info-panel ul {
-            padding-left: 20px;
-        }
-        .info-panel li {
-            margin-bottom: 5px;
-        }
-        .info-toggle {
-            background: none;
-            border: none;
-            color: #333;
-            font-weight: bold;
-            text-decoration: underline;
-            cursor: pointer;
-            padding: 5px 0;
-            display: block;
-            text-align: right;
-        }
+        .info-panel h4 { margin-top: 0; color: #1e3a8a; font-size: 1.1em; border-bottom: 1px dashed #d1d5db; padding-bottom: 5px; }
+        .info-panel ul { padding-left: 20px; }
+        .info-panel li { margin-bottom: 5px; }
+        .info-toggle { background: none; border: none; color: #1e3a8a; font-weight: bold; text-decoration: underline; cursor: pointer; padding: 5px 0; display: block; text-align: right; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>♊ The Gemini Lyric Forge V2.2</h1>
+        <h1>♊ The Gemini Lyric Forge V4.0</h1>
+        <p class="app-subtitle">Engineered Synthesis: Drake's Structure meets Ocean's Poetry</p>
         
         <div id="dashboard-view" class="view active">
-            <h2>🔥 Today's Training</h2>
-            <div id="progress-chart">
-                <p>📈 Daily Progress Chart (F/R/P Scores) will load here.</p>
+            <div class="card">
+                <h2>📈 Synthesis Progress</h2>
+                <div class="score-card">
+                    <div class="score-box f-score-box">F-Score Mastery: <strong id="avg-f-score">0%</strong></div>
+                    <div class="score-box p-score-box">P-Score Mastery: <strong id="avg-p-score">0%</strong></div>
+                </div>
+                <p class="text-center" style="margin-top: 15px; font-weight: 600;">Goal: Achieve 85% on both for Synthesis Mastery.</p>
             </div>
-            
-            <div class="module-selector">
-                <button class="drake-btn" onclick="startChallenge('drake_structure')">🎤 Start Drake Drill: Structure (F-Score)</button>
-                <button class="drake-btn" onclick="startChallenge('drake_rhythm_conv')">🥁 Start Drake Drill: Conversational Flow</button>
-                <button class="drake-btn" onclick="startChallenge('drake_rhythm_trip')">🥁 Start Drake Drill: Triplet Flow</button>
-                <button class="ocean-btn" onclick="startChallenge('ocean_poetics')">🌊 Start Ocean Opus (P-Score)</button>
+
+            <div class="module-selector card card-accent">
+                <h2>✍️ Start Daily Challenge</h2>
+                <button class="drake-btn" onclick="startChallenge('drake_structure')">🎯 Synthesis Drill: Structure (F-Score)</button>
+                <button class="ocean-btn" onclick="startChallenge('ocean_poetics')">🌊 Poetic Workout: Depth (P-Score)</button>
             </div>
-            
-            <p style="text-align: center; margin-top: 20px; font-size: 0.9em;">**The Synthesis Challenge:** Achieve high scores on all three modules.</p>
         </div>
 
         <div id="challenge-view" class="view">
             <h2 id="challenge-title"></h2>
             <p id="challenge-prompt" class="prompt"></p>
             
-            <button class="info-toggle" onclick="toggleInfo()">ℹ️ How to Approach This</button>
+            <button class="info-toggle" onclick="toggleInfo()">ℹ️ Strategy Guide</button>
+            <div id="info-section" class="info-panel"></div>
             
-            <div id="info-section" class="info-panel">
-                </div>
+            <div class="metadata-inputs">
+                <select id="input-mood">
+                    <option value="">Goal Mood (P-Score Context)</option>
+                    <option value="SAD">Sad/Melancholy</option>
+                    <option value="AMBITIOUS">Ambitious/Confident</option>
+                    <option value="NOSTALGIC">Nostalgic/Regretful</option>
+                    <option value="CONFLICT">Conflict/Angry</option>
+                </select>
+                <select id="input-motif">
+                    <option value="">Core Motif (P-Score Imagery)</option>
+                    <option value="CAR">Car/Vehicle (Speed/Journey)</option>
+                    <option value="COLOR">Color (Vivid/Emotional Palette)</option>
+                    <option value="TIME">Time (Nostalgia/Aging)</option>
+                </select>
+            </div>
             
             <div class="writing-area">
-                <textarea id="lyric-input" placeholder="Start writing your lyric here..."></textarea>
+                <textarea id="lyric-input" placeholder="Start typing your seamless lyric here... (No special markers needed)"></textarea>
                 <div class="status-bar">
-                    Bar Count: <span id="bar-count">0</span> | Lines: <span id="line-count">0</span> | Avg Syl/Line: <span id="syl-count">0</span>
+                    <div id="line-status">Lines: <span id="line-count">0</span></div>
+                    <div id="syl-status">Flow Density: <span id="syl-count">0</span> Syl/Line</div>
+                    <div id="flow-status">Flow Style: <span id="flow-type">--</span></div>
                 </div>
             </div>
             
@@ -87,23 +84,24 @@
         </div>
 
         <div id="results-view" class="view">
-            <h2>✅ Analysis Complete</h2>
+            <h2 class="card-success">✅ Session Report Card</h2>
+            
             <div class="score-card">
-                <div class="score-box f-score-box">F-Score (Structure): <span id="f-score">0</span>/100</div>
-                <div class="score-box r-score-box" style="background-color: #8c7e8c;">R-Score (Rhythm/Flow): <span id="r-score">0</span>/100</div>
-                <div class="score-box p-score-box">P-Score (Poetry/Depth): <span id="p-score">0</span>/100</div>
+                <div class="score-box f-score-box">F-Score (Structure): <strong id="f-score">0</strong>/100</div>
+                <div class="score-box p-score-box">P-Score (Poetry): <strong id="p-score">0</strong>/100</div>
             </div>
 
-            <h3>Feedback:</h3>
-            <ul id="feedback-list">
-                </ul>
+            <h3>Prescriptive Feedback:</h3>
+            <ul id="feedback-list"></ul>
 
-            <button onclick="saveAndShare()">💾 Save Progress & Download Score</button>
-            <button class="secondary" onclick="showView('dashboard-view')">New Challenge</button>
+            <div class="text-center">
+                <button onclick="saveAndShare()">💾 Export Daily Report (PDF/Image)</button>
+                <button class="secondary" onclick="showView('dashboard-view')">New Challenge</button>
+            </div>
         </div>
     </div>
     
-    <script src="lexicon.js"></script>
+    <script src="./data/lexicon.js"></script>
     <script src="lyric-forge.js"></script>
 </body>
 </html>
