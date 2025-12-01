@@ -18,6 +18,20 @@ function getNonEmptyLines(text) {
     return text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 }
 
+// --- A. UI & Navigation Functions ---
+
+function showView(viewId) {
+    document.querySelectorAll('.view').forEach(view => {
+        view.classList.remove('active');
+    });
+    document.getElementById(viewId).classList.add('active');
+    
+    if (viewId === 'dashboard-view') {
+        // Placeholder for chart visualization
+        console.log("Loading progress for dashboard.");
+    }
+}
+
 function updateCounters() {
     const text = document.getElementById('lyric-input').value;
     const lines = getNonEmptyLines(text);
