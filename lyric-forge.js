@@ -1,9 +1,9 @@
-// lyric-forge.js (Finalized V2.2 with Info Content)
+/ lyric-forge.js (Finalized V4.0 - Seamless Creative Engine)
 
 let currentChallenge = null;
 let savedProgress = JSON.parse(localStorage.getItem('lyricForgeProgress')) || [];
 
-// --- A. Utility Functions ---
+// --- A. Utility & Setup ---
 
 function estimateSyllables(word) {
     word = word.toLowerCase().replace(/[^a-z]/g, '');
@@ -15,21 +15,37 @@ function estimateSyllables(word) {
 }
 
 function getNonEmptyLines(text) {
+    // Only non-empty, trimmed lines count towards structure
     return text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 }
 
-// --- A. UI & Navigation Functions ---
+function calculateAverageScores() {
+    if (savedProgress.length === 0) return { avgF: 0, avgP: 0 };
+    
+    const totalF = savedProgress.reduce((sum, entry) => sum + (entry.fScore || 0), 0);
+    const totalP = savedProgress.reduce((sum, entry) => sum + (entry.pScore || 0), 0);
+    
+    return {
+        avgF: Math.round(totalF / savedProgress.length),
+        avgP: Math.round(totalP / savedProgress.length)
+    };
+}
+
+// --- B. UI & Navigation ---
 
 function showView(viewId) {
-    document.querySelectorAll('.view').forEach(view => {
-        view.classList.remove('active');
-    });
+    document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
     
     if (viewId === 'dashboard-view') {
-        // Placeholder for chart visualization
-        console.log("Loading progress for dashboard.");
+        updateDashboardProgress();
     }
+}
+
+function updateDashboardProgress() {
+    const { avgF, avgP } = calculateAverageScores();
+    document.getElementById('avg-f-score').textContent = `${avgF}%`;
+    document.getElementById('avg-p-score').textContent = `${avgP}%`;
 }
 
 function updateCounters() {
@@ -44,106 +60,49 @@ function updateCounters() {
         });
     });
 
-    const avgSylPerLine = lineCount > 0 ? (totalSyllables / lineCount).toFixed(1) : 0;
+    const avgSylPerLine = lineCount > 0 ? (totalSyllables / lineCount) : 0;
+    const flowType = inferFlowStyle(avgSylPerLine);
 
     document.getElementById('line-count').textContent = lineCount;
     document.getElementById('bar-count').textContent = Math.floor(lineCount / 4);
-    document.getElementById('syl-count').textContent = avgSylPerLine;
+    document.getElementById('syl-count').textContent = avgSylPerLine.toFixed(1);
+    document.getElementById('flow-type').textContent = flowType;
 }
-document.getElementById('lyric-input').addEventListener('input', updateCounters);
 
-
-// --- B. Info Content (New V3.0 UX Feature) ---
-
-const INFO_CONTENT = {
-    drake_structure: {
-        title: "Drake Drill: Structural Efficiency (F-Score)",
-        content: `
-            <h4>Structure Strategy: The Sandwich Method</h4>
-            <ul>
-                <li>Always prioritize the hook. Verses are "Spacers" and must be short (max 12 lines) to get back to the Chorus quickly.</li>
-                <li>The structure is rigid: Chorus -> Verse -> Chorus -> Verse -> Chorus.</li>
-            </ul>
-            <h4>Lexicon Focus</h4>
-            <ul>
-                <li>Use high-impact words (Lexicon words) as **rhythmic anchors** or structural markers, like the word "Yeah".</li>
-                <li>Rhyme Strategy: Focus on **simple couplets (AABB)** for clarity and cognitive ease.</li>
-            </ul>
-        `
-    },
-    drake_rhythm_conv: {
-        title: "Drake Drill: Conversational Flow (R-Score)",
-        content: `
-            <h4>Conversational Flow (40-55% Stress)</h4>
-            <ul>
-                <li>This is the signature **Trochaic Rhythm** (stressed-unstressed) that mimics natural speech.</li>
-                <li>Use the **/** marker primarily on naturally stressed words (nouns and key verbs).</li>
-                <li>**Goal:** Make the lyric feel conversational and "real".</li>
-            </ul>
-            <h4>The Pause Tactic</h4>
-            <ul>
-                <li>Use the **||** marker strategically to leave silence to emphasize a punchline or let the beat breathe.</li>
-            </ul>
-        `
-    },
-    drake_rhythm_trip: {
-        title: "Drake Drill: Triplet Flow (R-Score)",
-        content: `
-            <h4>Triplet Flow (30-38% Stress)</h4>
-            <ul>
-                <li>Subdivide the beat: ONE-e-uh. Your map should have many unstressed markers (**.**) for every one stressed marker (**/ **).</li>
-                <li>**Goal:** Achieve a high syllable density with a rolling, hypnotic effect (Trap Zeitgeist).</li>
-            </ul>
-        `
-    },
-    ocean_poetics: {
-        title: "Ocean Opus: Poetic Depth (P-Score)",
-        content: `
-            <h4>Metaphor Focus: No Abstractions</h4>
-            <ul>
-                <li>**Do not explicitly state the emotion** (e.g., don't use 'sadness'). Describe the **concrete object** you assigned as the metaphor.</li>
-                <li>The Metaphor Cohesion check looks for the **co-occurrence** of your motif (Car/Color) and the implied sentiment.</li>
-            </ul>
-            <h4>Narrative Strategy: Structural Subversion</h4>
-            <ul>
-                <li>**Linear Path:** Avoid repetition (no choruses). Write a song that moves from A to B.</li>
-                <li>Use the **[SWITCH] marker** to simulate abrupt time shifts or changes in perspective.</li>
-            </ul>
-        `
+function inferFlowStyle(avgSylPerLine) {
+    const T = LEXICON.FLOW_SYLLABLE_THRESHOLDS;
+    if (avgSylPerLine >= T.TRIPLET_MIN && avgSylPerLine <= T.TRIPLET_MAX) {
+        return "Triplet (Dense)";
+    } else if (avgSylPerLine >= T.CONVERSATIONAL_MIN && avgSylPerLine <= T.CONVERSATIONAL_MAX) {
+        return "Conversational (Trochaic)";
+    } else {
+        return "--";
     }
-};
+}
 
 function toggleInfo() {
-    const infoPanel = document.getElementById('info-section');
-    infoPanel.classList.toggle('active');
+    document.getElementById('info-section').classList.toggle('active');
 }
 
-// --- C. Challenge Definitions (Stable) ---
+
+// --- C. Challenge Definitions & Setup ---
 
 const CHALLENGES = {
     drake_structure: {
-        title: "🎤 Drake Drill: Structural Efficiency (F-Score)",
-        prompt: "Objective: Commercial Ubiquity. Write **28 non-empty lines** following the Chorus-Verse-Chorus structure. Max lines for Verse is 12, Chorus is 8. Must use **3 words** from the Drake Lexicon. Score focuses on structure and simple rhyme.",
+        title: "🎤 Synthesis Drill: Structure (F-Score)",
+        prompt: "Write 28 non-empty lines (Chorus-Verse-Chorus). Select a mood and motif to provide contextual imagery.",
         scoreType: 'F',
         targetLines: 28,
-    },
-    drake_rhythm_conv: {
-        title: "🥁 Drake Drill: Conversational Flow",
-        prompt: "Objective: Flow Mastery (Conversational). Write a 4-line verse. Immediately below each line, create a **Rhythmic Map** ( / for stressed, . for unstressed). Target Stress Ratio: 40-55%.",
-        scoreType: 'R', 
-        rhythmTarget: 'CONVERSATIONAL',
-    },
-    drake_rhythm_trip: {
-        title: "🥁 Drake Drill: Triplet Flow",
-        prompt: "Objective: Flow Mastery (Triplet). Write a 4-line verse. Immediately below each line, create a **Rhythmic Map** ( / for stressed, . for unstressed). Target Stress Ratio: 30-38%.",
-        scoreType: 'R', 
-        rhythmTarget: 'TRIPLET',
+        moodRequired: true,
+        motifRequired: true, // Dual Constraint
     },
     ocean_poetics: {
-        title: "🌊 Ocean Opus: Poetic Depth (P-Score)",
-        prompt: "Objective: Narrative Depth. Write **17 non-empty lines** (Line 1 = Metaphor). Must lack a chorus. Score checks Cohesion and Lexical Specificity.",
+        title: "🌊 Poetic Workout: Depth (P-Score)",
+        prompt: "Write 16 non-empty lines (No Chorus). Define a mood and motif. The tool STICTLY penalizes abstract nouns, forcing reliance on concrete imagery.",
         scoreType: 'P', 
-        targetLines: 17,
+        targetLines: 16,
+        moodRequired: true,
+        motifRequired: true,
     }
 };
 
@@ -153,284 +112,313 @@ function startChallenge(type) {
     document.getElementById('challenge-title').textContent = currentChallenge.title;
     document.getElementById('challenge-prompt').textContent = currentChallenge.prompt;
     
-    // Inject relevant info content
-    const infoData = INFO_CONTENT[type];
-    document.getElementById('info-section').innerHTML = infoData.content;
+    // Reset inputs and inject info content
+    document.getElementById('input-mood').value = "";
+    document.getElementById('input-motif').value = "";
     
+    // Inject relevant info content (Now relies on the simplified INFO_CONTENT object)
+    document.getElementById('info-section').innerHTML = INFO_CONTENT[type].content;
+    document.getElementById('info-section').classList.remove('active'); // Start closed
+    
+    // Show/hide inputs based on challenge requirements
+    document.getElementById('input-mood').parentNode.classList.remove('hidden'); // Simplified inputs are always shown in V4.0
+    document.getElementById('input-motif').parentNode.classList.remove('hidden');
+
     updateCounters();
     showView('challenge-view');
 }
 
+// Simplified Info Content for V4.0 UX
+const INFO_CONTENT = {
+    drake_structure: {
+        content: `
+            <h4>Structure Strategy: The Sandwich Method (F-Score Value)</h4>
+            <ul>
+                <li>**Action:** Aim for short verses (max 12 lines) to keep the hook frequency high.</li>
+                <li>**Value:** This maximizes streaming retention and commercial viability.</li>
+                <li>**Dual Constraint:** Use your selected Motif (Car/Color) frequently to ground the commercial topic in specific, Ocean-style imagery.</li>
+            </ul>
+            <h4>Flow Strategy: Inferred Rhythm (R-Score Value)</h4>
+            <ul>
+                <li>**Insight:** Keep your **Avg Syl/Line** status between 5-7 to maintain a relaxed, conversational flow (Drake's signature).</li>
+            </ul>
+        `
+    },
+    ocean_poetics: {
+        content: `
+            <h4>Lexical Specificity (P-Score Value)</h4>
+            <ul>
+                <li>**STRICT PENALTY:** The tool will penalize you heavily for using Abstract Nouns (sadness, truth, passion).</li>
+                <li>**Action:** Replace abstract words with **concrete imagery** (e.g., swap 'sadness' for 'cold texture' or 'oil marks').</li>
+            </ul>
+            <h4>Narrative Strategy: Structural Subversion</h4>
+            <ul>
+                <li>**Value:** This creates layers of meaning and intimacy. **Action:** Avoid repeating any line longer than 5 words. The lyric must move linearly from A to B.</li>
+            </ul>
+        `
+    }
+};
+
+
+// --- D. Core Scoring Logic ---
 
 function submitLyric() {
     const lyric = document.getElementById('lyric-input').value;
     const lines = getNonEmptyLines(lyric); 
+    const mood = document.getElementById('input-mood').value;
+    const motif = document.getElementById('input-motif').value;
     
-    if (lines.length < 4) {
-        alert("Please write at least 4 non-empty lines for a valid analysis.");
+    if (lines.length < 8 || !mood || !motif) {
+        alert("Please write at least 8 lines and select a Mood and Motif before scoring.");
         return;
     }
 
     let fScore = 0;
     let pScore = 0;
-    let rScore = 0;
     let feedback = [];
 
+    // Run scoring logic based on the current challenge type
     if (currentChallenge.scoreType === 'F') {
-        ({ fScore, feedback } = scoreDrakeDrill_Structure(lines, fScore, feedback));
-    } else if (currentChallenge.scoreType === 'R') {
-        ({ rScore, feedback } = scoreDrakeDrill_Rhythm(lines, rScore, feedback));
+        ({ fScore, pScore, feedback } = scoreSynthesisDrill(lines, mood, motif, feedback));
     } else if (currentChallenge.scoreType === 'P') {
-        ({ pScore, feedback } = scoreOceanOpus(lines, pScore, feedback));
+        ({ fScore, pScore, feedback } = scorePoeticWorkout(lines, mood, motif, feedback));
     }
 
+    // Display results
     document.getElementById('f-score').textContent = fScore;
-    document.getElementById('r-score').textContent = rScore;
     document.getElementById('p-score').textContent = pScore;
-    displayFeedback(feedback);
+    
+    displayFeedback(fScore, pScore, feedback);
     showView('results-view');
 
-    saveProgress(fScore, pScore, rScore, lyric, currentChallenge.title);
+    // Save for progress tracking
+    saveProgress(fScore, pScore, lyric, currentChallenge.title);
 }
 
-// --- F-SCORE (Structure) ---
+// --- SYNTHESIS DRILL (F-Score Focus with P-Score Dual Constraint) ---
 
-function scoreDrakeDrill_Structure(lines, fScore, feedback) {
-    const structureConstraint = currentChallenge.targetLines;
-
-    // 1. Structural Blueprinting (Max 40 points)
+function scoreSynthesisDrill(lines, mood, motif, feedback) {
+    let fScore = 0;
+    let pScore = 0;
+    
+    // 1. F-Score: Structural Compliance (Max 40 points)
+    const structureConstraint = CHALLENGES.drake_structure.targetLines;
     if (lines.length >= structureConstraint - 4 && lines.length <= structureConstraint + 4) {
         fScore += 40;
-        feedback.push({ type: 'success', text: `🏆 Structure: Line count (${lines.length}) is near the target (${structureConstraint}). Adheres to the Commercial Algorithm.` }); 
+        feedback.push({ type: 'success', scoreType: 'F', text: `🏆 Structure: Line count (${lines.length}) is near the target. Commercial Algorithm structure met.` }); 
     } else {
-        feedback.push({ type: 'fail', text: `❌ Structure: Line count of ${lines.length} is far from the target. Focus on short "Spacer" Verses.` }); 
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Structure: Line count of ${lines.length} is far from the target. **Action:** Aim for ${structureConstraint} lines (8/12/8) to meet the hook-frequency goal.` }); 
     }
 
-    // 2. Lexicon Use (Max 30 points)
+    // 2. F-Score: Lexicon Use (Max 30 points)
     const drakeWordsFound = LEXICON.DRAKE_LEXICON_WORDS.filter(word => lines.some(line => line.toLowerCase().includes(word))).length;
     if (drakeWordsFound >= 3) {
         fScore += 30;
-        feedback.push({ type: 'success', text: `💡 Lexicon: Used ${drakeWordsFound} required lexicon words. Good anchoring.` }); 
+        feedback.push({ type: 'success', scoreType: 'F', text: `💡 Lexicon: Used ${drakeWordsFound} high-impact lexicon words. Good anchoring.` }); 
     } else {
-        feedback.push({ type: 'fail', text: `❌ Lexicon: Only used ${drakeWordsFound} required lexicon words. Need 3 to ground the lyric.` });
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Lexicon: Only used ${drakeWordsFound} lexicon words. **Action:** Incorporate at least 3 high-impact words (e.g., time, team, top).` });
     }
 
-    // 3. Rhyme Scheme Verification (AABB - Low Weight) (Max 10 points)
-    const endWords = lines.slice(0, 4).map(line => {
+    // 3. F-Score: Inferred Flow Style (Max 30 points)
+    const avgSylPerLine = lines.length > 0 ? lines.join(' ').split(/\s+/).reduce((sum, word) => sum + estimateSyllables(word), 0) / lines.length : 0;
+    const T = LEXICON.FLOW_SYLLABLE_THRESHOLDS;
+    
+    if (avgSylPerLine >= T.CONVERSATIONAL_MIN && avgSylPerLine <= T.CONVERSATIONAL_MAX) {
+        fScore += 30;
+        feedback.push({ type: 'success', scoreType: 'F', text: `🥁 Flow: Inferred Conversational Flow (${avgSylPerLine.toFixed(1)} Syl/Line). Ideal for Drake's melodic hybrid.` });
+    } else {
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: Density (${avgSylPerLine.toFixed(1)} Syl/Line) is too high/low. **Action:** Aim for 5-7 Syl/Line to achieve a relaxed, conversational rhythm.` });
+    }
+
+    // --- DUAL CONSTRAINT: P-SCORE Check (Ocean's Imagery) (Max 100 points, does not affect FScore) ---
+    pScore = scoreImageryDensity(lines, pScore, feedback, 'Synthesis');
+
+    return { fScore: Math.min(100, fScore), pScore: pScore, feedback: feedback };
+}
+
+
+// --- POETIC WORKOUT (P-Score Focus with F-Score Dual Constraint) ---
+
+function scorePoeticWorkout(lines, mood, motif, feedback) {
+    let fScore = 0;
+    let pScore = 0;
+    const lyricText = lines.join(' ').toLowerCase();
+
+    // 1. P-SCORE: Lexical Specificity (The "No Abstractions" Rule) (Max 40 points)
+    const abstractUsage = LEXICON.ABSTRACT_NOUNS.filter(word => lyricText.includes(word)).length;
+    
+    if (abstractUsage === 0) {
+        pScore += 40;
+        feedback.push({ type: 'success', scoreType: 'P', text: `🏆 Specificity: Zero Abstract Nouns found. **Value:** This maximizes semantic weight and poetic specificity.` });
+    } else if (abstractUsage <= 1) {
+        pScore += 30;
+        feedback.push({ type: 'success', scoreType: 'P', text: `✅ Specificity: Only 1 abstraction found. Good control.` });
+    } else {
+        // Severe penalty for 2+ abstract words
+        feedback.push({ type: 'fail', scoreType: 'P', text: `🛑 Specificity Fail: Used ${abstractUsage} abstract nouns. **Action:** Swap words like 'sadness' or 'joy' for concrete nouns (e.g., cold texture, shadow).` });
+    }
+
+    // 2. P-SCORE: Imagery Cohesion (Max 40 points)
+    const emotionWords = LEXICON.SENTIMENT_WORDS[mood].filter(word => lyricText.includes(word)).length;
+    const motifWords = LEXICON.OCEAN_MOTIFS[motif] ? (lyricText.match(new RegExp(LEXICON.OCEAN_MOTIFS[motif], 'g')) || []).length : 0;
+    const concreteReplaced = LEXICON.CONCRETE_REPLACERS.filter(word => lyricText.includes(word)).length;
+
+    if (emotionWords >= 3 && motifWords >= 3 && concreteReplaced >= 2) {
+        pScore += 40;
+        feedback.push({ type: 'success', scoreType: 'P', text: `🏆 Cohesion: High density of **${motif}** motif and ${mood} sentiment. The Extended Metaphor is cohesive!` });
+    } else {
+        feedback.push({ type: 'fail', scoreType: 'P', text: `❌ Cohesion: Low density of motif/sentiment words. **Action:** Integrate your ${motif} motif more often alongside ${mood} language (need 3+ hits on each).` });
+    }
+
+    // 3. P-SCORE: Structural Subversion (Max 20 points)
+    const hasRepetitiveLines = lines.some((line, i) => lines.slice(i + 1).some(otherLine => otherLine.trim() === line.trim() && line.length > 8));
+    
+    if (!hasRepetitiveLines) {
+        pScore += 20;
+        feedback.push({ type: 'success', scoreType: 'P', text: `✅ Subversion: Avoided repetition. **Value:** This linearity ensures active decoding and critical engagement.` });
+    } else {
+        feedback.push({ type: 'fail', scoreType: 'P', text: `❌ Subversion: Detected repetitive lines. **Action:** Avoid choruses; strive for a linear (A-B-C-D) narrative path.` });
+    }
+
+    // --- DUAL CONSTRAINT: F-SCORE Check (Drake's Rhyme Simplicity) (Max 100 points, does not affect PScore) ---
+    fScore = scoreRhymeDiscipline(lines, fScore, feedback, 'Workout');
+
+    return { fScore: fScore, pScore: Math.min(100, pScore), feedback: feedback };
+}
+
+// --- DUAL CONSTRAINT HELPER FUNCTIONS (New V4.0) ---
+
+function scoreImageryDensity(lines, currentScore, feedback, challengeType) {
+    // This runs during the DRAKE drill to ensure the lyric has depth (P-Score element)
+    const lyricText = lines.join(' ').toLowerCase();
+    const concreteReplaced = LEXICON.CONCRETE_REPLACERS.filter(word => lyricText.includes(word)).length;
+    
+    if (concreteReplaced >= 4) {
+        currentScore += 30; // 30 bonus points for deep imagery
+        feedback.push({ type: 'success', scoreType: 'P', text: `💎 **DUAL CONSTRAINT** (P-Score Bonus): Used ${concreteReplaced} high-impact imagery words. Excellent blending of commercial structure with poetic depth.` });
+    } else if (concreteReplaced >= 2) {
+        currentScore += 15;
+        feedback.push({ type: 'success', scoreType: 'P', text: `✅ **DUAL CONSTRAINT** (P-Score Bonus): Used ${concreteReplaced} imagery words. Continue to enrich the commercial narrative with specific nouns.` });
+    } else {
+        feedback.push({ type: 'fail', scoreType: 'P', text: `❌ **DUAL CONSTRAINT** (P-Score Bonus): Low concrete imagery count. **Action:** Even in commercial tracks, ground the narrative with specific, tangible details.` });
+    }
+
+    return currentScore;
+}
+
+function scoreRhymeDiscipline(lines, currentScore, feedback, challengeType) {
+    // This runs during the OCEAN workout to ensure the lyric has structural discipline (F-Score element)
+    const endWords = lines.slice(-4).map(line => {
         const words = line.trim().split(/\s+/);
         return words[words.length - 1].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase();
     });
     
     let rhymeScore = 0;
     if (endWords.length >= 4) {
-        if (endWords[0] === endWords[1] && endWords[2] === endWords[3]) { rhymeScore += 10; }
+        // Check for AABB couplet in the last 4 lines
+        if (endWords[0] === endWords[1] && endWords[2] === endWords[3]) { 
+            rhymeScore += 40; 
+        }
     }
     
     if (rhymeScore > 0) {
-        fScore += rhymeScore;
-        feedback.push({ type: 'success', text: `✅ Rhyme: Detected clear AABB couplets. Prioritize perfect rhymes for clarity.` });
+        currentScore += rhymeScore;
+        feedback.push({ type: 'success', scoreType: 'F', text: `🏆 **DUAL CONSTRAINT** (F-Score Bonus): Last 4 lines achieved a strict AABB couplet. This trains structural discipline even during a poetic exercise.` });
     } else {
-        feedback.push({ type: 'fail', text: `❌ Rhyme: Did not confirm the simple AABB scheme. Consider using simple, direct end rhymes.` });
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ **DUAL CONSTRAINT** (F-Score Bonus): Failed to achieve an AABB couplet in the final 4 lines. **Action:** Practice controlling the listener's ear by ending the poetic journey with structural clarity.` });
     }
 
-    // 4. Flow Pacing (The Pause Tactic) (Max 20 points)
-    const pauseTacticUsed = lines.some(line => line.includes(LEXICON.DRAKE_PAUSE_MARKER));
-    if (pauseTacticUsed) {
-        fScore += 20;
-        feedback.push({ type: 'success', text: `✅ Pause Tactic: The [PAUSE] marker was used, emulating the "stop-start" flow for emphasis.` }); 
-    } else {
-        feedback.push({ type: 'fail', text: `❌ Pause Tactic: No [PAUSE] marker found. This technique is crucial for rhythmic emphasis.` });
-    }
-
-    return { fScore: Math.min(100, fScore), feedback };
-}
-
-// --- R-SCORE (Rhythm - CORRECTED V2.2) ---
-
-function scoreDrakeDrill_Rhythm(lines, rScore, feedback) {
-    if (lines.length !== 8) {
-        feedback.push({ type: 'fail', text: '❌ Rhythmic Map requires exactly 4 lines of lyric and 4 lines of map (8 total non-empty lines).' });
-        return { rScore: 0, feedback };
-    }
-
-    let mapLines = lines.filter((_, i) => i % 2 !== 0);
-    let rhythmScore = 0;
-
-    let targetMinRatio = 0;
-    let targetMaxRatio = 0;
-    let targetStyle = currentChallenge.rhythmTarget;
-
-    if (targetStyle === 'CONVERSATIONAL') {
-        targetMinRatio = 0.40; targetMaxRatio = 0.55; 
-    } else if (targetStyle === 'TRIPLET') {
-        targetMinRatio = 0.30; targetMaxRatio = 0.38;
-    }
-
-    mapLines.forEach((map, index) => {
-        const stressed = (map.match(/\//g) || []).length;
-        const totalMarkers = stressed + (map.match(/\./g) || []).length;
-
-        if (totalMarkers === 0) {
-            feedback.push({ type: 'fail', text: `❌ Line ${index + 1}: Map is empty. Cannot score stress ratio.` });
-            return;
-        }
-
-        const actualRatio = stressed / totalMarkers;
-
-        // 1. Stress Density Check (Max 80 points) - Uses simplified logic
-        if (actualRatio >= targetMinRatio && actualRatio <= targetMaxRatio) {
-            rhythmScore += 20; 
-            feedback.push({ type: 'success', text: `✅ Line ${index + 1}: Stress ratio (${actualRatio.toFixed(2)}) is compliant with ${targetStyle} flow.` });
-        } else {
-            feedback.push({ type: 'fail', text: `❌ Line ${index + 1}: Stress ratio (${actualRatio.toFixed(2)}) is outside the target range for ${targetStyle} flow.` });
-        }
-    });
-
-    // 2. Final Critique (Max 20 points)
-    if (rhythmScore >= 60) {
-        rhythmScore += 20;
-        feedback.push({ type: 'success', text: '🏆 Flow Mastery: You successfully engineered rhythmic predictability. Excellent flow compliance!' });
-    } else {
-        feedback.push({ type: 'fail', text: '📝 Flow Feedback: Need more consistency in your stress pattern to hit the target density.' });
-    }
-
-    return { rScore: Math.min(100, rhythmScore), feedback };
-}
-
-// --- P-SCORE (Poetry) ---
-
-function scoreOceanOpus(lines, pScore, feedback) {
-    if (lines.length !== 17) {
-        feedback.push({ type: 'fail', text: `❌ Structural Violation: Expected 17 lines (1 metaphor + 16 lyric), found ${lines.length}.` });
-        return { pScore: 0, feedback };
-    }
-
-    const metaphorLine = lines[0].toLowerCase().trim();
-    const lyricLines = lines.slice(1);
-    const lyricText = lyricLines.join(' ').toLowerCase();
-
-    // Check 1: Metaphor Format and Extraction (Max 10 points)
-    let metaphorCheck = metaphorLine.match(/(\w+)\s*=\s*(\w+)/);
-    if (!metaphorCheck) {
-        feedback.push({ type: 'fail', text: "❌ Metaphor Format: First line must be formatted as 'Motif = Emotion'." });
-        return { pScore: 0, feedback };
-    }
-    
-    const motif = metaphorCheck[1];
-    const coreEmotion = metaphorCheck[2];
-    pScore += 10; 
-
-    // Check 2: Metaphor Cohesion (Max 40 points)
-    let targetSentiment = LEXICON.SENTIMENT_WORDS.NEGATIVE; 
-    if (LEXICON.SENTIMENT_WORDS.POSITIVE.includes(coreEmotion)) {
-        targetSentiment = LEXICON.SENTIMENT_WORDS.POSITIVE;
-    }
-    
-    const sentimentCount = targetSentiment.filter(word => lyricText.includes(word)).length;
-    const motifCount = (lyricText.match(new RegExp(motif, 'g')) || []).length;
-    
-    if (sentimentCount >= 3 && motifCount >= 3) {
-        pScore += 40;
-        feedback.push({ type: 'success', text: `🏆 Cohesion: High density of the **${motif}** motif and its associated **${coreEmotion}** sentiment words. Excellent Extended Metaphor.` });
-    } else {
-        feedback.push({ type: 'fail', text: `❌ Cohesion: Motif count (${motifCount}) or Sentiment count (${sentimentCount}) is too low. The motif is not being used to describe the core emotion.` });
-    }
-
-    // Check 3: Lexical Specificity (The "No Abstractions" Rule) (Max 30 points - CORRECTED V2.2)
-    const abstractUsage = LEXICON.ABSTRACT_NOUNS.filter(word => 
-        word !== coreEmotion && lyricText.includes(word)
-    ).length;
-    
-    const concreteUsed = LEXICON.CONCRETE_REPLACERS.filter(word => lyricText.includes(word)).length;
-
-    if (abstractUsage === 0 && concreteUsed >= 2) {
-        pScore += 30;
-        feedback.push({ type: 'success', text: `✅ Specificity: Avoided abstractions and used ${concreteUsed} specific nouns, grounding the poetry.` });
-    } else if (abstractUsage > 2) {
-        feedback.push({ type: 'fail', text: `🛑 Specificity Fail: Used ${abstractUsage} abstract nouns (more than 2). Replace them with concrete nouns. (0 points)` });
-        // Score remains unchanged (0 points added for this section)
-    } else if (abstractUsage > 0 || concreteUsed < 2) {
-        pScore += 15;
-        feedback.push({ type: 'fail', text: `❌ Specificity: Used ${abstractUsage} abstractions. Focus on finding concrete nouns.` });
-    } else {
-        pScore += 30;
-        feedback.push({ type: 'success', text: `✅ Specificity: Used ${concreteUsed} concrete replacers. Good focus.` }); 
-    }
-
-
-    // Check 4: Structural Subversion (Max 20 points)
-    const hasRepetitiveLines = lyricLines.some((line, i) => lyricLines.slice(i + 1).some(otherLine => otherLine.trim() === line.trim() && line.length > 10));
-    const switchMarkerUsed = lyricText.includes(LEXICON.OCEAN_NARRATIVE_MARKER);
-    
-    if (switchMarkerUsed && !hasRepetitiveLines) {
-        pScore += 20;
-        feedback.push({ type: 'success', text: `✅ Subversion: Used the [SWITCH] marker and avoided repetition, adhering to a Linear Path.` });
-    } else {
-        feedback.push({ type: 'fail', text: `❌ Subversion: Did not use [SWITCH] or detected repetition. Needs fragmentation and linearity.` });
-    }
-
-    return { pScore: Math.min(100, pScore), feedback };
+    return currentScore;
 }
 
 
-// --- E. Progress Tracking and Navigation ---
+// --- E. Progress Tracking and Sharing (Fixed and Enhanced) ---
 
-function displayFeedback(feedback) {
+function displayFeedback(fScore, pScore, feedback) {
     const list = document.getElementById('feedback-list');
     list.innerHTML = '';
-    feedback.forEach(item => {
+    
+    // Sort feedback by score type for clarity
+    const sortedFeedback = feedback.sort((a, b) => (a.scoreType > b.scoreType) ? 1 : -1);
+
+    sortedFeedback.forEach(item => {
         const li = document.createElement('li');
         const icon = item.type === 'success' ? '🏆' : '❌';
-        li.innerHTML = `<span style="font-weight: bold;">${icon}</span> ${item.text}`;
-        li.classList.add(item.type === 'success' ? 'feedback-success' : 'feedback-fail');
+        
+        // Use bold text to highlight the action/insight
+        li.innerHTML = `<span style="font-weight: bold;">${icon} ${item.scoreType}-SCORE:</span> ${item.text}`;
+        li.classList.add('feedback-item', item.type === 'success' ? 'feedback-success' : 'feedback-fail');
         list.appendChild(li);
     });
 }
 
-function saveProgress(fScore, pScore, rScore, lyric, title) {
-    const newEntry = {
-        date: new Date().toISOString().split('T')[0],
-        title: title,
-        fScore: fScore,
-        pScore: pScore,
-        rScore: rScore,
-        lyric: lyric
-    };
-    savedProgress.push(newEntry);
-    localStorage.setItem('lyricForgeProgress', JSON.stringify(savedProgress));
+function saveProgress(fScore, pScore, lyric, title) {
+    try {
+        const newEntry = {
+            date: new Date().toISOString().split('T')[0],
+            title: title,
+            fScore: fScore,
+            pScore: pScore,
+            // R-score is now inferred or secondary, focus on F and P
+            lyric: lyric
+        };
+        
+        savedProgress.push(newEntry);
+        localStorage.setItem('lyricForgeProgress', JSON.stringify(savedProgress));
+        
+        // Show immediate success confirmation
+        console.log("Progress Saved Successfully!");
+        
+    } catch (e) {
+        console.error("Saving Error: Failed to write to localStorage.", e);
+        alert("Saving Failed: Your browser storage might be full or blocked. Progress will not be tracked.");
+    }
 }
 
-// Placeholder for download 
 function saveAndShare() {
+    // Calculate 7-day average for Report Card
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const recentScores = savedProgress.filter(e => e.date >= sevenDaysAgo);
+    
+    const totalF = recentScores.reduce((sum, entry) => sum + (entry.fScore || 0), 0);
+    const totalP = recentScores.reduce((sum, entry) => sum + (entry.pScore || 0), 0);
+    
+    const avgF = recentScores.length > 0 ? Math.round(totalF / recentScores.length) : 0;
+    const avgP = recentScores.length > 0 ? Math.round(totalP / recentScores.length) : 0;
+
     const fScore = document.getElementById('f-score').textContent;
-    const rScore = document.getElementById('r-score').textContent;
     const pScore = document.getElementById('p-score').textContent;
     const feedbackText = Array.from(document.getElementById('feedback-list').children).map(li => li.textContent).join('\n');
     const lyric = document.getElementById('lyric-input').value;
     
     const content = `
-*** Gemini Lyric Forge Analysis ***
-Challenge: ${currentChallenge.title}
+*** GEMINI LYRIC FORGE: DAILY REPORT CARD (V4.0) ***
 Date: ${new Date().toLocaleDateString()}
+Challenge: ${currentChallenge.title}
 
+--- TODAY'S SCORES ---
 Flow/Structure Score (F-Score): ${fScore}/100
-Rhythm/Flow Score (R-Score): ${rScore}/100
 Poetry/Depth Score (P-Score): ${pScore}/100
+Synthesis Score (F x P): ${Math.round((fScore/100) * (pScore/100) * 100)}%
 
---- Feedback ---
+--- PRESCRIPTIVE FEEDBACK ---
 ${feedbackText}
 
---- Your Lyric ---
-${lyric}
+--- MASTERY TRAJECTORY (Last 7 Days) ---
+F-Score Average (Commercial Viability): ${avgF}%
+P-Score Average (Critical Depth): ${avgP}%
+(Goal is 85% on both for Synthesis Mastery.)
 
-(Save this file to your device to track progress!)
+--- YOUR LYRIC ---
+${lyric}
 `;
 
+    // Download logic
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `LyricForge_Score_${new Date().toISOString().split('T')[0]}.txt`;
+    a.download = `LyricForge_Report_${new Date().toISOString().split('T')[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
