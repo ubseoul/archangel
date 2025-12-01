@@ -1,76 +1,37 @@
-// /data/lexicon.js (Stable V4.0)
+// /data/lexicon.js (Stable V4.1)
+
 const LEXICON = {
-//--- Drake (F-Score) Metrics
-一ーー
-DRAKE_LEXICON_WORDS: ['time'
-" 'love'
-'god', 'plan', 'city', 'team',
-'real', 'yeah',
-'bottom'
-,'top'1,
-// --- Frank Ocean (P-Score) Metrics ---
-OCEAN_MOTIFS: {
-CAR: 'car', COLOR: 'color'
-• TIME:
-'time', WATER: 'water',
-// Used for simpler mood selection
-GOAL_MOODS: {
-SAD: 'betrayal', AMBITIOUS: 'success'
-NOSTALGIC: 'regret', CONFLICT: 'anger'
-}.
-// --- Sentiment & Specificity ---
-SENTIMENT
-_WORDS : {
-I Negative words used for scoring
-Cohesion with SAD/NOSTALGIC/CONFLICT moods
-NEGATIVE: ['betrayal'
-'lonely'
-'stuck'
-'sadness"" bregee, 'empty", 'crash',
-'hollow'
-'cold"
-'numb',
-'fade
-'scar',
-'shame',
-\/ Positive words used for scoring
-Cohesion with AMBITIOUS moods
-'loyal'
-POSITIVE: 'love'
-, 'happy', 'success'
-'bright'
-'gold'
-'safe
-'warm'
-'future
-},
-'shine',
-'win', 'glory', 'top'l,
-ABSTRACT_NOUNS: ['sadness',
-'feeling', 'passion'
-'trust',
-'anger'
-'anxiety'
-'joy',
-truth 1, 1/ Explicitly penalized
-CONCRETE_REPLACERS: ['markings'
-'surface'
-'spec',
-'crystal'
-'ozone'
-'texture'
-"scars',
-'shadows'
-'leather'
-, 'engíne, 'oil i, "l
-Reward for using these
-/ --- Structural Targets
-DRAKE_TARGET_STRUCTURE: 18, 12, 8],
-FLOW_SYLLABLE_THRESHOLDS: {
-CONVERSATIONAL_MIN: 5,
-CONVERSATIONAL_MAX: 7, 1/ 5-7 syllables per
-line for conversational
-TRIPLET_MIN: 9, TRIPLET_MAX: 11, 1/
-9-11 syllables per line for assumed triplet/ dense flow
-}
+    // --- Drake (F-Score) Metrics ---
+    DRAKE_LEXICON_WORDS: ['time', 'love', 'god', 'plan', 'city', 'team', 'real', 'yeah', 'bottom', 'top'], 
+    
+    // --- Frank Ocean (P-Score) Metrics ---
+    OCEAN_MOTIFS: {
+        CAR: 'car', COLOR: 'color', TIME: 'time', WATER: 'water',
+    },
+    // Used for simpler mood selection: Mapped to NEGATIVE or POSITIVE keys
+    GOAL_MOODS: {
+        SAD: 'NEGATIVE', AMBITIOUS: 'POSITIVE', NOSTALGIC: 'NEGATIVE', CONFLICT: 'NEGATIVE',
+    },
+    
+    // --- Sentiment & Specificity ---
+    SENTIMENT_WORDS: {
+        // NEGATIVE words used for scoring Cohesion with SAD/NOSTALGIC/CONFLICT moods
+        NEGATIVE: ['betrayal', 'lonely', 'regret', 'stuck', 'cold', 'numb', 'hollow', 'broke', 'empty', 'crash', 'fade', 'scar', 'shame'],
+        // POSITIVE words used for scoring Cohesion with AMBITIOUS moods
+        POSITIVE: ['love', 'happy', 'success', 'loyal', 'bright', 'gold', 'safe', 'warm', 'future', 'shine', 'win', 'glory', 'top'],
+    },
+    // Words explicitly penalized (Strict "No Abstractions" Rule)
+    ABSTRACT_NOUNS: ['sadness', 'anger', 'feeling', 'passion', 'trust', 'anxiety', 'joy', 'truth'], 
+    // Reward for using these specific, tangible nouns (Concrete Replacers)
+    CONCRETE_REPLACERS: ['markings', 'surface', 'spec', 'crystal', 'ozone', 'texture', 'scars', 'shadows', 'leather', 'engine', 'oil'], 
+    
+    // --- Structural Targets ---
+    DRAKE_TARGET_STRUCTURE: [8, 12, 8], // Chorus-Verse-Chorus line count
+    FLOW_SYLLABLE_THRESHOLDS: {
+        CONVERSATIONAL_MIN: 5, CONVERSATIONAL_MAX: 7, // Syl/Line for Conversational flow
+        TRIPLET_MIN: 9, TRIPLET_MAX: 11, // Syl/Line for assumed Triplet/Dense flow
+    }
+};
+
 window.LEXICON = LEXICON;
+
