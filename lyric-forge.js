@@ -1,4 +1,4 @@
-// lyric-forge.js (Finalized V4.4 - FINAL SYNTHESIS STABILITY)
+// lyric-forge.js (Finalized V4.4 - FINAL DISPLAY FIX)
 
 let currentChallenge = null;
 let savedProgress = JSON.parse(localStorage.getItem('lyricForgeProgress')) || [];
@@ -145,7 +145,7 @@ const INFO_CONTENT = {
             </ul>
             <h4>Flow Strategy: Melodic Accessibility (The $\mathbf{5-7}$ Syl/Line Rule)</h4>
             <ul>
-                <li>**Insight:** Your natural flow is $\mathbf{9.0+}$ Syl/Line. To achieve $\mathbf{100\%}$ F-Score, you **must** edit down your words until the Flow Status reads $\mathbf{5.0 - 7.0}$ Syl/Line. This trains **Syllable Economy**.</li>
+                <li>**Insight:** The tool infers your flow from the **Syl/Line** status. Aim for 5-7 Syl/Line to maintain a relaxed, conversational rhythm (Drake's signature).</li>
             </ul>
         `
     },
@@ -183,23 +183,26 @@ function submitLyric() {
         return;
     }
 
-    let fScore = 0;
-    let pScore = 0;
-    let feedback = [];
+    let result = {};
 
     if (currentChallenge.scoreType === 'F') {
-        ({ fScore, pScore, feedback } = scoreSynthesisDrill(lines, mood, motif, feedback));
+        result = scoreSynthesisDrill(lines, mood, motif, []);
     } else if (currentChallenge.scoreType === 'P') {
-        ({ fScore, pScore, feedback } = scorePoeticWorkout(lines, mood, motif, feedback));
+        result = scorePoeticWorkout(lines, mood, motif, []);
     }
 
-    document.getElementById('f-score').textContent = fScore;
-    document.getElementById('p-score').textContent = pScore;
+    // --- FINAL DISPLAY AND SAVING SEQUENCE ---
     
-    displayFeedback(fScore, pScore, feedback);
+    // 1. Update HTML Elements with final results (Must happen before saving)
+    document.getElementById('f-score').textContent = result.fScore;
+    document.getElementById('p-score').textContent = result.pScore;
+    
+    // 2. Display Feedback and show the results view
+    displayFeedback(result.fScore, result.pScore, result.feedback);
     showView('results-view');
 
-    saveProgress(fScore, pScore, lyric, currentChallenge.title);
+    // 3. Save the session data locally
+    saveProgress(result.fScore, result.pScore, lyric, currentChallenge.title);
 }
 
 // --- SYNTHESIS DRILL (F-Score Focus with P-Score Dual Constraint) ---
@@ -243,7 +246,7 @@ function scoreSynthesisDrill(lines, mood, motif, feedback) {
         // Full Pass: Conversational Flow (5-7 Syl)
         fScore += 30;
         feedback.push({ type: 'success', scoreType: 'F', text: `🥁 Flow: Achieved Conversational Flow (${avgSylPerLine.toFixed(1)} Syl/Line). Perfect for melodic delivery. (30 points)` });
-    } else if (avgSylPerLine >= T.CONVERSATIONAL_MAX + 0.1 && avgSylPerLine <= T.TRIPLET_MAX + 0.1) {
+    } else if (lineCount >= 24 && avgSylPerLine >= T.CONVERSATIONAL_MAX + 0.1 && avgSylPerLine <= T.TRIPLET_MAX + 0.1) {
          // Partial Pass: Consistent Dense Flow (7.1 - 11.1 Syl) - Reward for consistent rhythmic effort
         fScore += 10; 
         feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: Density (${avgSylPerLine.toFixed(1)} Syl/Line) is too high. **Action:** To maximize score, ruthlessly edit syllables down to $\mathbf{5-7}$ Syl/Line.` });
