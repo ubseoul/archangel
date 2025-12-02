@@ -1,9 +1,12 @@
-// lyric-forge.js (Finalized V4.4 - FINAL STABILITY FIX)
+// lyric-forge.js (V5.0 - Semantic Intelligence Engine)
 
 let currentChallenge = null;
 let savedProgress = JSON.parse(localStorage.getItem('lyricForgeProgress')) || [];
+let liveAnalysis = null; // Store live analysis for highlighting
 
-// --- CRITICAL NAVIGATION FUNCTIONS (MOVED TO TOP FOR STABILITY) ---
+// ============================================
+// CORE NAVIGATION & VIEW MANAGEMENT
+// ============================================
 
 function showView(viewId) {
     document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
@@ -26,22 +29,6 @@ function updateDashboardProgress() {
     if (avgPElement) avgPElement.textContent = `${avgP}%`;
 }
 
-
-// --- A. Utility Functions ---
-
-function estimateSyllables(word) {
-    word = word.toLowerCase().replace(/[^a-z]/g, '');
-    if (word.length <= 3) return 1;
-    word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
-    word = word.replace(/^y/, '');
-    const match = word.match(/[aeiouy]{1,2}/g);
-    return match ? match.length : 0;
-}
-
-function getNonEmptyLines(text) {
-    return text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-}
-
 function calculateAverageScores() {
     if (savedProgress.length === 0) return { avgF: 0, avgP: 0 };
     
@@ -54,31 +41,139 @@ function calculateAverageScores() {
     };
 }
 
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
 
-function updateCounters() {
-    const text = document.getElementById('lyric-input').value;
+function estimateSyllables(word) {
+    word = word.toLowerCase().replace(/[^a-z]/g, '');
+    if (word.length <= 3) return 1;
+    word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+    word = word.replace(/^y/, '');
+    const match = word.match(/[aeiouy]{1,2}/g);
+    return match ? match.length : 1;
+}
+
+function getNonEmptyLines(text) {
+    return text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+}
+
+// Debounce function for live updates
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// ============================================
+// LIVE ANALYSIS ENGINE
+// ============================================
+
+function analyzeLyricLive(text, mood, motif) {
     const lines = getNonEmptyLines(text);
-    const lineCount = lines.length;
+    const lyricText = lines.join(' ').toLowerCase();
     
+    // Calculate flow metrics
     let totalSyllables = 0;
     lines.forEach(line => {
         line.split(/\s+/).forEach(word => {
             totalSyllables += estimateSyllables(word);
         });
     });
-
-    const avgSylPerLine = lineCount > 0 ? (totalSyllables / lineCount) : 0;
+    const avgSylPerLine = lines.length > 0 ? (totalSyllables / lines.length) : 0;
     const flowType = inferFlowStyle(avgSylPerLine);
-
-    const lineCountElement = document.getElementById('line-count');
-    const barCountElement = document.getElementById('bar-count');
-    const sylCountElement = document.getElementById('syl-count');
-    const flowTypeElement = document.getElementById('flow-type');
     
-    if (lineCountElement) lineCountElement.textContent = lineCount;
-    if (barCountElement) barCountElement.textContent = Math.floor(lineCount / 4);
-    if (sylCountElement) sylCountElement.textContent = avgSylPerLine.toFixed(1);
-    if (flowTypeElement) flowTypeElement.textContent = flowType;
+    // Detect Drake lexicon words
+    const drakeWords = LEXICON.DRAKE_LEXICON_WORDS.filter(word => 
+        lyricText.includes(word)
+    );
+    
+    // Detect abstract nouns
+    const allAbstracts = LEXICON.getAllAbstractNouns();
+    const abstractsFound = allAbstracts.filter(word => lyricText.includes(word));
+    
+    // Detect concrete nouns
+    const allConcrete = LEXICON.getAllConcreteWords();
+    const concreteFound = allConcrete.filter(word => lyricText.includes(word));
+    const concreteCategories = countConcreteCategories(lyricText);
+    
+    // Detect motif words
+    let motifWords = [];
+    let motifCategories = {};
+    let motifDensity = 0;
+    if (motif && LEXICON.SEMANTIC_MOTIFS[motif]) {
+        const motifData = calculateMotifDensity(lyricText, motif);
+        motifWords = motifData.words;
+        motifCategories = motifData.categories;
+        motifDensity = motifData.density;
+    }
+    
+    // Detect sentiment words
+    let sentimentWords = [];
+    if (mood && LEXICON.SENTIMENT_WORDS[mood]) {
+        sentimentWords = LEXICON.SENTIMENT_WORDS[mood].filter(word => 
+            lyricText.includes(word)
+        );
+    }
+    
+    return {
+        lines: lines.length,
+        avgSylPerLine: avgSylPerLine.toFixed(1),
+        flowType: flowType,
+        drakeWords: drakeWords,
+        drakeCount: drakeWords.length,
+        abstractsFound: abstractsFound,
+        abstractCount: abstractsFound.length,
+        concreteFound: concreteFound,
+        concreteCount: concreteFound.length,
+        concreteCategories: concreteCategories,
+        motifWords: motifWords,
+        motifCount: motifDensity,
+        motifCategories: Object.keys(motifCategories).length,
+        sentimentWords: sentimentWords,
+        sentimentCount: sentimentWords.length,
+        allWords: { drake: drakeWords, abstract: abstractsFound, concrete: concreteFound, motif: motifWords, sentiment: sentimentWords }
+    };
+}
+
+function countConcreteCategories(lyricText) {
+    const categories = new Set();
+    for (let [category, words] of Object.entries(LEXICON.CONCRETE_LEXICON)) {
+        if (words.some(word => lyricText.includes(word))) {
+            categories.add(category);
+        }
+    }
+    return Array.from(categories);
+}
+
+function calculateMotifDensity(lyricText, motifKey) {
+    const motif = LEXICON.SEMANTIC_MOTIFS[motifKey];
+    if (!motif) return { density: 0, categories: {}, words: [] };
+    
+    let totalMatches = 0;
+    let categoryHits = {};
+    let allWords = [];
+    
+    for (let [category, words] of Object.entries(motif)) {
+        const matches = words.filter(word => lyricText.includes(word));
+        if (matches.length > 0) {
+            totalMatches += matches.length;
+            categoryHits[category] = matches;
+            allWords.push(...matches);
+        }
+    }
+    
+    return {
+        density: totalMatches,
+        categories: categoryHits,
+        words: allWords
+    };
 }
 
 function inferFlowStyle(avgSylPerLine) {
@@ -86,31 +181,207 @@ function inferFlowStyle(avgSylPerLine) {
     if (avgSylPerLine >= T.TRIPLET_MIN && avgSylPerLine <= T.TRIPLET_MAX) {
         return "Triplet (Dense)";
     } else if (avgSylPerLine >= T.CONVERSATIONAL_MIN && avgSylPerLine <= T.CONVERSATIONAL_MAX) {
-        return "Conversational (Trochaic)";
+        return "Conversational (Melodic)";
+    } else if (avgSylPerLine < T.CONVERSATIONAL_MIN) {
+        return "Sparse (Too Simple)";
     } else {
-        return "--";
+        return "Overcomplicated";
     }
 }
 
-function toggleInfo() {
-    document.getElementById('info-section').classList.toggle('active');
+// ============================================
+// LIVE COUNTER UPDATES (WITH HIGHLIGHTING)
+// ============================================
+
+const updateCounters = debounce(function() {
+    const text = document.getElementById('lyric-input').value;
+    const mood = document.getElementById('input-mood').value;
+    const motif = document.getElementById('input-motif').value;
+    
+    liveAnalysis = analyzeLyricLive(text, mood, motif);
+    
+    // Update line count
+    const lineCountElement = document.getElementById('line-count');
+    if (lineCountElement) {
+        lineCountElement.textContent = liveAnalysis.lines;
+        lineCountElement.className = liveAnalysis.lines >= 28 ? 'status-good' : 'status-progress';
+    }
+    
+    // Update flow
+    const sylCountElement = document.getElementById('syl-count');
+    const flowTypeElement = document.getElementById('flow-type');
+    if (sylCountElement) {
+        sylCountElement.textContent = liveAnalysis.avgSylPerLine;
+        const flowGood = liveAnalysis.flowType === "Conversational (Melodic)";
+        sylCountElement.className = flowGood ? 'status-good' : 'status-warn';
+    }
+    if (flowTypeElement) {
+        flowTypeElement.textContent = liveAnalysis.flowType;
+    }
+    
+    // Update Drake lexicon count
+    const drakeCountElement = document.getElementById('drake-count');
+    if (drakeCountElement) {
+        drakeCountElement.textContent = liveAnalysis.drakeCount;
+        drakeCountElement.className = liveAnalysis.drakeCount >= 3 ? 'status-good' : 'status-warn';
+    }
+    
+    // Update abstract count
+    const abstractCountElement = document.getElementById('abstract-count');
+    if (abstractCountElement) {
+        abstractCountElement.textContent = liveAnalysis.abstractCount;
+        abstractCountElement.className = liveAnalysis.abstractCount <= 1 ? 'status-good' : 'status-error';
+    }
+    
+    // Update concrete count
+    const concreteCountElement = document.getElementById('concrete-count');
+    if (concreteCountElement) {
+        concreteCountElement.textContent = liveAnalysis.concreteCount;
+        concreteCountElement.className = liveAnalysis.concreteCount >= 5 ? 'status-good' : 'status-progress';
+    }
+    
+    // Update motif count
+    const motifCountElement = document.getElementById('motif-count');
+    if (motifCountElement) {
+        motifCountElement.textContent = liveAnalysis.motifCount;
+        motifCountElement.className = liveAnalysis.motifCount >= 5 ? 'status-good' : 'status-progress';
+    }
+    
+    // Update progress bars
+    updateProgressBars(liveAnalysis);
+    
+    // Update contextual warnings
+    updateContextualWarnings(liveAnalysis);
+    
+    // Apply text highlighting
+    applyTextHighlighting(text, liveAnalysis);
+    
+}, 300);
+
+function updateProgressBars(analysis) {
+    // Line progress
+    const lineProgress = document.getElementById('line-progress');
+    if (lineProgress) {
+        const percent = Math.min(100, (analysis.lines / 28) * 100);
+        lineProgress.style.width = `${percent}%`;
+    }
+    
+    // Concrete progress
+    const concreteProgress = document.getElementById('concrete-progress');
+    if (concreteProgress) {
+        const percent = Math.min(100, (analysis.concreteCount / 8) * 100);
+        concreteProgress.style.width = `${percent}%`;
+    }
+    
+    // Motif progress
+    const motifProgress = document.getElementById('motif-progress');
+    if (motifProgress) {
+        const percent = Math.min(100, (analysis.motifCount / 5) * 100);
+        motifProgress.style.width = `${percent}%`;
+    }
 }
 
-// --- C. Challenge Definitions & Setup ---
+function updateContextualWarnings(analysis) {
+    const warningsContainer = document.getElementById('contextual-warnings');
+    if (!warningsContainer) return;
+    
+    let warnings = [];
+    
+    // Abstract noun warning
+    if (analysis.abstractCount > 1) {
+        warnings.push({
+            type: 'error',
+            text: `⚠️ ${analysis.abstractCount} abstract nouns detected. Remove ${analysis.abstractCount - 1}.`,
+            words: analysis.abstractsFound.slice(0, 3).join(', ')
+        });
+    } else if (analysis.abstractCount === 1) {
+        warnings.push({
+            type: 'caution',
+            text: `⚠️ 1 abstract noun found: "${analysis.abstractsFound[0]}". Consider replacing.`
+        });
+    }
+    
+    // Concrete imagery suggestion
+    if (analysis.concreteCount < 5) {
+        warnings.push({
+            type: 'tip',
+            text: `💡 Need ${5 - analysis.concreteCount} more concrete nouns for depth.`
+        });
+    }
+    
+    // Motif density warning
+    if (analysis.motifCount < 5) {
+        warnings.push({
+            type: 'tip',
+            text: `💡 Strengthen motif: Need ${5 - analysis.motifCount} more motif words.`
+        });
+    }
+    
+    // Render warnings
+    if (warnings.length === 0) {
+        warningsContainer.innerHTML = '<div class="warning-success">✅ No issues detected - looking good!</div>';
+    } else {
+        warningsContainer.innerHTML = warnings.map(w => `
+            <div class="warning-${w.type}">
+                ${w.text}
+                ${w.words ? `<br><span class="warning-words">${w.words}</span>` : ''}
+            </div>
+        `).join('');
+    }
+}
+
+function applyTextHighlighting(text, analysis) {
+    const highlightOverlay = document.getElementById('highlight-overlay');
+    if (!highlightOverlay) return;
+    
+    // Create a map of word positions and their types
+    let html = text;
+    const allWords = analysis.allWords;
+    
+    // Sort by length (longest first) to avoid partial replacements
+    const wordMap = new Map();
+    
+    // Priority: abstract (highest) > concrete > motif > sentiment > drake
+    allWords.abstract.forEach(word => wordMap.set(word, 'abstract'));
+    allWords.concrete.forEach(word => {
+        if (!wordMap.has(word)) wordMap.set(word, 'concrete');
+    });
+    allWords.motif.forEach(word => {
+        if (!wordMap.has(word)) wordMap.set(word, 'motif');
+    });
+    allWords.drake.forEach(word => {
+        if (!wordMap.has(word)) wordMap.set(word, 'drake');
+    });
+    
+    // Sort by length descending
+    const sortedWords = Array.from(wordMap.entries()).sort((a, b) => b[0].length - a[0].length);
+    
+    // Apply highlighting
+    sortedWords.forEach(([word, type]) => {
+        const regex = new RegExp(`\\b${word}\\b`, 'gi');
+        html = html.replace(regex, match => `<span class="highlight-${type}">${match}</span>`);
+    });
+    
+    highlightOverlay.innerHTML = html;
+}
+
+// ============================================
+// CHALLENGE SETUP
+// ============================================
 
 const CHALLENGES = {
     drake_structure: {
         title: "🎤 Synthesis Drill: Melodic Flow (F-Score)",
-        prompt: "Write 28 non-empty lines (Chorus-Verse-Chorus). Select a mood and motif to provide contextual imagery.",
+        prompt: "Write 28 lines in 8/12/8 structure. Focus on melodic flow (5-7 syl/line) and commercial accessibility.",
         scoreType: 'F',
         targetLines: 28,
         moodRequired: true,
-        motifRequired: true, 
+        motifRequired: true,
     },
     ocean_poetics: {
-        title: "🌊 Poetic Workout: Depth (P-Score)",
-        prompt: "Write 16 non-empty lines (No Chorus). Define a mood and motif. The tool STICTLY penalizes abstract nouns, forcing reliance on concrete imagery.",
-        scoreType: 'P', 
+        title: "🌊 Poetic Workout: Narrative Depth (P-Score)",
+        prompt: "Write 16 lines with zero abstractions. Build cohesive imagery through concrete sensory details.",
+        scoreType: 'P',
         targetLines: 16,
         moodRequired: true,
         motifRequired: true,
@@ -127,46 +398,105 @@ function startChallenge(type) {
     document.getElementById('input-mood').value = "";
     document.getElementById('input-motif').value = "";
     
-    // NOTE: Strategy Guide is now static in index.html and only toggles visibility.
+    // Clear live analysis
+    liveAnalysis = null;
     
+    // Reset counters
     updateCounters();
     showView('challenge-view');
 }
 
-const INFO_CONTENT = {
-    drake_structure: {
-        content: `
-            <h4>Structure Strategy: The Sandwich Method (F-Score Value)</h4>
-            <ul>
-                <li>**Action:** Aim for short verses (max 12 lines) to keep the hook frequency high. This maximizes commercial viability.</li>
-                <li>**Dual Constraint:** Use your selected Motif (Car/Color/Time) frequently to ground the accessible topic in specific, Ocean-style imagery.</li>
-            </ul>
-            <h4>Flow Strategy: Melodic Accessibility (The $\mathbf{5-7}$ Syl/Line Rule)</h4>
-            <ul>
-                <li>**Insight:** The tool infers your flow from the **Syl/Line** status. Aim for 5-7 Syl/Line to maintain a relaxed, conversational rhythm (Drake's signature).</li>
-            </ul>
-        `
-    },
-    ocean_poetics: {
-        content: `
-            <h4>Lexical Specificity (P-Score Value)</h4>
-            <ul>
-                <li>**STRICT PENALTY:** The tool will penalize you heavily for using Abstract Nouns (e.g., sadness, passion).</li>
-                <li>**Action:** Replace abstract words with **concrete imagery** (e.g., swap 'sadness' for 'cold texture' or 'oil marks').</li>
-            </ul>
-            <h4>Narrative Strategy: Structural Subversion</h4>
-            <ul>
-                <li>**Value:** This creates layers of meaning and intimacy. **Action:** Avoid repeating any line longer than 5 words. The lyric must move linearly from A to B.</li>
-            </ul>
-        `
-    }
-};
+function toggleInfo() {
+    document.getElementById('info-section').classList.toggle('active');
+}
 
-// --- D. Core Scoring Logic ---
+function toggleWordList() {
+    document.getElementById('word-list-panel').classList.toggle('active');
+}
+
+// ============================================
+// WORD LIST DISPLAY (FOR UX)
+// ============================================
+
+function showMotifWords() {
+    const motif = document.getElementById('input-motif').value;
+    if (!motif) {
+        alert('Please select a motif first');
+        return;
+    }
+    
+    const wordListContent = document.getElementById('word-list-content');
+    const motifData = LEXICON.SEMANTIC_MOTIFS[motif];
+    
+    let html = `<h3>📘 ${motif} Motif Word Bank</h3>`;
+    html += '<p class="word-list-hint">Use these words to strengthen your motif density:</p>';
+    
+    for (let [category, words] of Object.entries(motifData)) {
+        html += `
+            <div class="word-category">
+                <h4>${category.toUpperCase()}</h4>
+                <div class="word-chips">
+                    ${words.map(w => `<span class="word-chip">${w}</span>`).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    wordListContent.innerHTML = html;
+    toggleWordList();
+}
+
+function showConcreteWords() {
+    const wordListContent = document.getElementById('word-list-content');
+    
+    let html = '<h3>🎨 Concrete Noun Reference</h3>';
+    html += '<p class="word-list-hint">Replace abstractions with these sensory details:</p>';
+    
+    const categories = ['FOOD', 'TEXTURE', 'VISUAL', 'NATURE', 'BODY'];
+    categories.forEach(cat => {
+        const words = LEXICON.CONCRETE_LEXICON[cat];
+        html += `
+            <div class="word-category">
+                <h4>${cat}</h4>
+                <div class="word-chips">
+                    ${words.slice(0, 30).map(w => `<span class="word-chip">${w}</span>`).join('')}
+                    ${words.length > 30 ? `<span class="word-chip-more">+${words.length - 30} more</span>` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    wordListContent.innerHTML = html;
+    toggleWordList();
+}
+
+function showAbstractWords() {
+    const wordListContent = document.getElementById('word-list-content');
+    
+    const allAbstracts = LEXICON.getAllAbstractNouns();
+    
+    let html = '<h3>🚫 Abstract Nouns (AVOID THESE)</h3>';
+    html += '<p class="word-list-hint">These words weaken your specificity. Use concrete replacements instead.</p>';
+    
+    html += `
+        <div class="word-category">
+            <div class="abstract-words">
+                ${allAbstracts.map(w => `<span class="abstract-chip">${w}</span>`).join('')}
+            </div>
+        </div>
+    `;
+    
+    wordListContent.innerHTML = html;
+    toggleWordList();
+}
+
+// ============================================
+// SCORING ENGINE (V5.0 - SEMANTIC INTELLIGENCE)
+// ============================================
 
 function submitLyric() {
     const lyric = document.getElementById('lyric-input').value;
-    const lines = getNonEmptyLines(lyric); 
+    const lines = getNonEmptyLines(lyric);
     
     const mood = document.getElementById('input-mood').value;
     const motif = document.getElementById('input-motif').value;
@@ -194,166 +524,199 @@ function submitLyric() {
     document.getElementById('f-score').textContent = fScore;
     document.getElementById('p-score').textContent = pScore;
     
+    // Calculate synthesis score
+    const synthesisScore = Math.round((fScore / 100) * (pScore / 100) * 100);
+    const synthesisElement = document.getElementById('synthesis-score');
+    if (synthesisElement) {
+        synthesisElement.textContent = synthesisScore;
+    }
+    
     displayFeedback(fScore, pScore, feedback);
-    showView('results-view');
-
     saveProgress(fScore, pScore, lyric, currentChallenge.title);
+    showView('results-view');
 }
 
-// --- SYNTHESIS DRILL (F-Score Focus with P-Score Dual Constraint) ---
+// ============================================
+// F-SCORE: SYNTHESIS DRILL (Drake Protocol)
+// ============================================
 
 function scoreSynthesisDrill(lines, mood, motif, feedback) {
     let fScore = 0;
     let pScore = 0;
     const lyricText = lines.join(' ').toLowerCase();
-
-    // Calculate Syl/Line Average (Needed for Flow Scoring)
-    const avgSylPerLine = lines.length > 0 ? lines.join(' ').split(/\s+/).reduce((sum, word) => sum + estimateSyllables(word), 0) / lines.length : 0;
-    const T = LEXICON.FLOW_SYLLABLE_THRESHOLDS;
+    const T = LEXICON.SCORING_THRESHOLDS;
     
-    // --- F-Score Primary Checks (Max 100 points) ---
-    
-    // 1. F-Score: Structural Compliance (Max 40 points)
-    const structureConstraint = CHALLENGES.drake_structure.targetLines;
+    // 1. F-SCORE: Line Structure (40 points)
     const lineCount = lines.length;
+    const targetLines = T.F_SCORE.LINE_EXACT;
+    const tolerance = T.F_SCORE.LINE_TOLERANCE;
     
-    if (lineCount >= structureConstraint - 4 && lineCount <= structureConstraint + 4) {
+    if (lineCount === targetLines) {
         fScore += 40;
-        feedback.push({ type: 'success', scoreType: 'F', text: `🏆 Structure: Line count (${lineCount}) is near the target. Commercial Algorithm structure met.` }); 
-    } else {
-        fScore += 5; 
-        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Structure: Line count of ${lineCount} is far from the target. **Action:** Aim for ${structureConstraint} lines (8/12/8) to meet the hook-frequency goal.` }); 
-    }
-
-    // 2. F-Score: Lexicon Use (Max 30 points)
-    const drakeWordsFound = LEXICON.DRAKE_LEXICON_WORDS.filter(word => lines.some(line => line.toLowerCase().includes(word))).length;
-    if (drakeWordsFound >= 3) {
+        feedback.push({ type: 'success', scoreType: 'F', text: `✅ Structure: Perfect ${targetLines} lines achieved. Optimal hook frequency.` });
+    } else if (lineCount >= targetLines - tolerance && lineCount <= targetLines + tolerance) {
         fScore += 30;
-        feedback.push({ type: 'success', scoreType: 'F', text: `💡 Lexicon: Used ${drakeWordsFound} high-impact lexicon words. Good anchoring.` }); 
+        feedback.push({ type: 'success', scoreType: 'F', text: `✅ Structure: ${lineCount} lines (within range). Good structure.` });
     } else {
-        fScore += 5; 
-        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Lexicon: Only used ${drakeWordsFound} lexicon words. **Action:** Incorporate at least 3 high-impact words (e.g., time, team, top).` });
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Structure: ${lineCount} lines. Target is ${targetLines} (±${tolerance}). Adjust line count for commercial algorithm.` });
     }
-
-    // 3. F-Score: Flow Quality (Max 30 points) - FINAL V4.4 REALISTIC FLOW FIX
     
-    if (avgSylPerLine >= T.CONVERSATIONAL_MIN && avgSylPerLine <= 9.5) { // Threshold raised to 9.5 based on test data
-        // Full Pass: Accepting 5 - 9.5 Syl/Line as Melodic Flow due to estimator limitations
+    // 2. F-SCORE: Flow Quality (30 points) - STRICTER
+    let totalSyllables = 0;
+    lines.forEach(line => {
+        line.split(/\s+/).forEach(word => {
+            totalSyllables += estimateSyllables(word);
+        });
+    });
+    const avgSylPerLine = totalSyllables / lines.length;
+    
+    if (avgSylPerLine >= T.F_SCORE.FLOW_PERFECT.min && avgSylPerLine <= T.F_SCORE.FLOW_PERFECT.max) {
         fScore += 30;
-        feedback.push({ type: 'success', scoreType: 'F', text: `🥁 Flow: Achieved Melodic Flow (${avgSylPerLine.toFixed(1)} Syl/Line). Ideal for melodic delivery. (30 points)` });
+        feedback.push({ type: 'success', scoreType: 'F', text: `🏆 Flow: Perfect melodic flow (${avgSylPerLine.toFixed(1)} syl/line). Maximum sing-along accessibility.` });
+    } else if (avgSylPerLine >= T.F_SCORE.FLOW_ACCEPTABLE.min && avgSylPerLine <= T.F_SCORE.FLOW_ACCEPTABLE.max) {
+        fScore += 15;
+        feedback.push({ type: 'success', scoreType: 'F', text: `✅ Flow: Acceptable range (${avgSylPerLine.toFixed(1)} syl/line). Could be tighter for melodic perfection.` });
     } else {
-        // Fail: Unstable Flow (below 5) or too high (above 9.5)
-        fScore += 0;
-        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: Density (${avgSylPerLine.toFixed(1)} Syl/Line) is too high/low. **Action:** Aim for 5-7 Syl/Line (or max 9.5 in the tool) to achieve a relaxed, conversational rhythm.` });
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: ${avgSylPerLine.toFixed(1)} syl/line is outside the melodic range (${T.F_SCORE.FLOW_PERFECT.min}-${T.F_SCORE.FLOW_PERFECT.max}). Simplify phrasing.` });
     }
-
-
-    // --- DUAL CONSTRAINT: P-SCORE Check (Ocean's Imagery) (Max 30 points, affects PScore only) ---
-    pScore = scoreImageryDensity(lines, pScore, feedback, motif, 'Synthesis');
     
-    pScore = Math.min(100, pScore);
-
+    // 3. F-SCORE: Drake Lexicon (30 points) - STRICTER
+    const drakeWords = LEXICON.DRAKE_LEXICON_WORDS.filter(word => lyricText.includes(word));
+    const drakeCount = drakeWords.length;
+    
+    if (drakeCount >= T.F_SCORE.LEXICON_PERFECT) {
+        fScore += 30;
+        feedback.push({ type: 'success', scoreType: 'F', text: `🏆 Lexicon: ${drakeCount} anchor words used (${drakeWords.join(', ')}). Elite commercial anchoring.` });
+    } else if (drakeCount >= T.F_SCORE.LEXICON_MIN) {
+        fScore += 20;
+        feedback.push({ type: 'success', scoreType: 'F', text: `✅ Lexicon: ${drakeCount} anchor words (${drakeWords.join(', ')}). Meets minimum.` });
+    } else {
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Lexicon: Only ${drakeCount} anchor words. Need ${T.F_SCORE.LEXICON_MIN}+ for commercial viability. Add: time, team, top, real.` });
+    }
+    
+    // DUAL CONSTRAINT: Ocean Imagery (30 points for P-Score)
+    pScore = scoreImageryDensity(lines, pScore, feedback, motif);
+    
     return { fScore: Math.min(100, fScore), pScore: pScore, feedback: feedback };
 }
 
-
-// --- POETIC WORKOUT (P-SCORE Focus with F-Score Dual Constraint) ---
+// ============================================
+// P-SCORE: POETIC WORKOUT (Ocean Methodology)
+// ============================================
 
 function scorePoeticWorkout(lines, mood, motif, feedback) {
     let fScore = 0;
     let pScore = 0;
     const lyricText = lines.join(' ').toLowerCase();
-
-    // 1. P-SCORE: Lexical Specificity (The "No Abstractions" Rule) (Max 40 points)
-    const abstractUsage = LEXICON.ABSTRACT_NOUNS.filter(word => lyricText.includes(word)).length;
+    const T = LEXICON.SCORING_THRESHOLDS;
     
-    if (abstractUsage === 0) {
+    // 1. P-SCORE: Lexical Purity (40 points) - STRICTER
+    const allAbstracts = LEXICON.getAllAbstractNouns();
+    const abstractsFound = allAbstracts.filter(word => lyricText.includes(word));
+    const abstractCount = abstractsFound.length;
+    
+    if (abstractCount === T.P_SCORE.ABSTRACT_PERFECT) {
         pScore += 40;
-        feedback.push({ type: 'success', scoreType: 'P', text: `🏆 Specificity: Zero Abstract Nouns found. **Value:** This maximizes semantic weight and poetic specificity.` });
-    } else if (abstractUsage <= 1) {
+        feedback.push({ type: 'success', scoreType: 'P', text: `🏆 Purity: Zero abstractions. Perfect lexical specificity achieved.` });
+    } else if (abstractCount <= T.P_SCORE.ABSTRACT_MAX) {
+        pScore += 25;
+        feedback.push({ type: 'success', scoreType: 'P', text: `✅ Purity: ${abstractCount} abstraction found (${abstractsFound[0]}). Acceptable control.` });
+    } else {
+        feedback.push({ type: 'fail', scoreType: 'P', text: `❌ Purity: ${abstractCount} abstractions (${abstractsFound.slice(0, 3).join(', ')}). Maximum ${T.P_SCORE.ABSTRACT_MAX} allowed. Replace with concrete imagery.` });
+    }
+    
+    // 2. P-SCORE: Concrete Imagery Density (30 points) - STRICTER
+    const allConcrete = LEXICON.getAllConcreteWords();
+    const concreteFound = allConcrete.filter(word => lyricText.includes(word));
+    const concreteCount = concreteFound.length;
+    const concreteCategories = countConcreteCategories(lyricText);
+    
+    if (concreteCount >= T.P_SCORE.CONCRETE_PERFECT) {
         pScore += 30;
-        feedback.push({ type: 'success', scoreType: 'P', text: `✅ Specificity: Only 1 abstraction found. Good control.` });
-    } else {
-        feedback.push({ type: 'fail', scoreType: 'P', text: `🛑 Specificity Fail: Used ${abstractUsage} abstract nouns (more than 1). **Action:** Replace abstract words with concrete imagery.` });
-    }
-
-    // 2. P-SCORE: Imagery Cohesion (Max 40 points)
-    const targetSentimentKey = mood; 
-    const sentimentCount = LEXICON.SENTIMENT_WORDS[targetSentimentKey].filter(word => lyricText.includes(word)).length;
-    
-    const motifKey = motif.toUpperCase();
-    const motifWords = LEXICON.OCEAN_MOTIFS[motifKey] ? (lyricText.match(new RegExp(LEXICON.OCEAN_MOTIFS[motifKey], 'g')) || []).length : 0;
-    const concreteReplaced = LEXICON.CONCRETE_REPLACERS.filter(word => lyricText.includes(word)).length;
-
-    if (sentimentCount >= 3 && motifWords >= 2 && concreteReplaced >= 2) {
-        pScore += 40;
-        feedback.push({ type: 'success', scoreType: 'P', text: `🏆 Cohesion: High density of **${motif}** motif and ${mood} sentiment. The Extended Metaphor is cohesive!` });
-    } else {
-        feedback.push({ type: 'fail', scoreType: 'P', text: `❌ Cohesion: Low density of motif/sentiment words. **Action:** Integrate your ${motif} motif more often alongside ${mood} language (need 3+ hits on sentiment).` });
-    }
-
-    // 3. P-SCORE: Structural Subversion (Max 20 points)
-    const hasRepetitiveLines = lines.some((line, i) => lines.slice(i + 1).some(otherLine => otherLine.trim() === line.trim() && line.length > 8));
-    
-    if (!hasRepetitiveLines) {
+        feedback.push({ type: 'success', scoreType: 'P', text: `🏆 Imagery: ${concreteCount} concrete nouns across ${concreteCategories.length} sensory categories. Rich, multi-dimensional imagery.` });
+    } else if (concreteCount >= T.P_SCORE.CONCRETE_MIN) {
         pScore += 20;
-        feedback.push({ type: 'success', scoreType: 'P', text: `✅ Subversion: Avoided repetition. **Value:** This linearity ensures active decoding and critical engagement.` });
+        feedback.push({ type: 'success', scoreType: 'P', text: `✅ Imagery: ${concreteCount} concrete nouns. Good density. Push to ${T.P_SCORE.CONCRETE_PERFECT}+ for mastery.` });
     } else {
-        feedback.push({ type: 'fail', scoreType: 'P', text: `❌ Subversion: Detected repetitive lines. **Action:** Avoid choruses; strive for a linear (A-B-C-D) narrative path.` });
+        feedback.push({ type: 'fail', scoreType: 'P', text: `❌ Imagery: Only ${concreteCount} concrete nouns. Need ${T.P_SCORE.CONCRETE_MIN}+ for narrative depth. Add sensory details.` });
     }
-
-    // --- DUAL CONSTRAINT: F-SCORE Check (Drake's Rhyme Simplicity) (Max 40 points, affects FScore only) ---
-    fScore = scoreRhymeDiscipline(lines, fScore, feedback, 'Workout');
-
+    
+    // 3. P-SCORE: Motif Cohesion (30 points) - STRICTER
+    const motifData = calculateMotifDensity(lyricText, motif);
+    const motifDensity = motifData.density;
+    const motifCategoryCount = Object.keys(motifData.categories).length;
+    
+    const sentimentKey = mood;
+    const sentimentWords = LEXICON.SENTIMENT_WORDS[sentimentKey];
+    const sentimentCount = sentimentWords.filter(word => lyricText.includes(word)).length;
+    
+    if (motifDensity >= T.P_SCORE.MOTIF_DENSITY_MIN && motifCategoryCount >= T.P_SCORE.MOTIF_DIVERSITY && sentimentCount >= T.P_SCORE.SENTIMENT_MIN) {
+        pScore += 30;
+        feedback.push({ type: 'success', scoreType: 'P', text: `🏆 Cohesion: ${motifDensity} motif words across ${motifCategoryCount} categories + ${sentimentCount} sentiment words. Extended metaphor is dense and cohesive.` });
+    } else {
+        const issues = [];
+        if (motifDensity < T.P_SCORE.MOTIF_DENSITY_MIN) issues.push(`need ${T.P_SCORE.MOTIF_DENSITY_MIN - motifDensity} more motif words`);
+        if (motifCategoryCount < T.P_SCORE.MOTIF_DIVERSITY) issues.push(`use ${T.P_SCORE.MOTIF_DIVERSITY - motifCategoryCount} more motif categories`);
+        if (sentimentCount < T.P_SCORE.SENTIMENT_MIN) issues.push(`need ${T.P_SCORE.SENTIMENT_MIN - sentimentCount} more ${mood} sentiment words`);
+        
+        feedback.push({ type: 'fail', scoreType: 'P', text: `❌ Cohesion: Weak metaphor density (${issues.join(', ')}). Sustain your ${motif} motif throughout.` });
+    }
+    
+    // DUAL CONSTRAINT: Drake Rhyme Discipline (40 points for F-Score)
+    fScore = scoreRhymeDiscipline(lines, fScore, feedback);
+    
     return { fScore: fScore, pScore: Math.min(100, pScore), feedback: feedback };
 }
 
-// --- DUAL CONSTRAINT HELPER FUNCTIONS ---
+// ============================================
+// DUAL CONSTRAINT HELPERS
+// ============================================
 
-function scoreImageryDensity(lines, currentScore, feedback, motif, challengeType) {
+function scoreImageryDensity(lines, currentScore, feedback, motif) {
     const lyricText = lines.join(' ').toLowerCase();
-    const concreteReplaced = LEXICON.CONCRETE_REPLACERS.filter(word => lyricText.includes(word)).length;
+    const allConcrete = LEXICON.getAllConcreteWords();
+    const concreteFound = allConcrete.filter(word => lyricText.includes(word));
+    const concreteCount = concreteFound.length;
+    const T = LEXICON.SCORING_THRESHOLDS;
     
-    // Final goal: Require 3 concrete replacers for the max 30 points
-    if (concreteReplaced >= 3) {
-        currentScore += 30; // 30 bonus points for deep imagery
-        feedback.push({ type: 'success', scoreType: 'P', text: `💎 **DUAL CONSTRAINT** (Ocean Imagery): Used ${concreteReplaced} high-impact imagery words. Excellent blending of commercial structure with poetic depth.` });
-    } else if (concreteReplaced >= 2) {
+    if (concreteCount >= T.P_SCORE.CONCRETE_PERFECT) {
+        currentScore += 30;
+        feedback.push({ type: 'success', scoreType: 'P', text: `💎 DUAL CONSTRAINT (Ocean Imagery): ${concreteCount} concrete nouns. Elite synthesis of commercial structure with poetic depth.` });
+    } else if (concreteCount >= T.P_SCORE.CONCRETE_MIN) {
         currentScore += 15;
-        feedback.push({ type: 'success', scoreType: 'P', text: `✅ **DUAL CONSTRAINT** (Ocean Imagery): Used ${concreteReplaced} imagery words. Continue to enrich the commercial narrative with specific nouns.` });
+        feedback.push({ type: 'success', scoreType: 'P', text: `✅ DUAL CONSTRAINT (Ocean Imagery): ${concreteCount} concrete nouns. Good balance.` });
     } else {
-        feedback.push({ type: 'fail', scoreType: 'P', text: `❌ **DUAL CONSTRAINT** (Ocean Imagery): Low concrete imagery count. **Action:** Ground the commercial narrative in specific, tangible details.` });
+        feedback.push({ type: 'fail', scoreType: 'P', text: `❌ DUAL CONSTRAINT (Ocean Imagery): Only ${concreteCount} concrete nouns. Need ${T.P_SCORE.CONCRETE_MIN}+ to ground commercial narrative in specificity.` });
     }
-
+    
     return currentScore;
 }
 
-function scoreRhymeDiscipline(lines, currentScore, feedback, challengeType) {
-    // Check AABB couplet in the last 4 lines (Drake's structural clarity)
+function scoreRhymeDiscipline(lines, currentScore, feedback) {
+    // Check AABB couplet in final 4 lines
+    if (lines.length < 4) {
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ DUAL CONSTRAINT (Drake Discipline): Need at least 4 lines to check rhyme scheme.` });
+        return currentScore;
+    }
+    
     const endWords = lines.slice(-4).map(line => {
         const words = line.trim().split(/\s+/);
-        return words[words.length - 1].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase();
+        return words[words.length - 1].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").toLowerCase();
     });
     
-    let rhymeScore = 0;
-    if (endWords.length >= 4) {
-        if (endWords[0] === endWords[1] && endWords[2] === endWords[3]) { 
-            rhymeScore += 40; 
-        }
+    if (endWords.length >= 4 && endWords[0] === endWords[1] && endWords[2] === endWords[3]) {
+        currentScore += 40;
+        feedback.push({ type: 'success', scoreType: 'F', text: `🏆 DUAL CONSTRAINT (Drake Discipline): Perfect AABB couplet in final 4 lines. Structural clarity achieved.` });
+    } else {
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ DUAL CONSTRAINT (Drake Discipline): Final 4 lines don't form AABB couplet. End poetic journey with predictable rhyme: AA-BB.` });
     }
     
-    if (rhymeScore > 0) {
-        currentScore += rhymeScore;
-        feedback.push({ type: 'success', scoreType: 'F', text: `🏆 **DUAL CONSTRAINT** (Drake Discipline): Final 4 lines achieved a strict AABB couplet. This trains structural control.` });
-    } else {
-        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ **DUAL CONSTRAINT** (Drake Discipline): Failed to achieve an AABB couplet in the final 4 lines. **Action:** Offer structural clarity by ending the poetic journey with a predictable rhyme.` });
-    }
-
     return currentScore;
 }
 
-
-// --- E. Progress Tracking and Sharing (Unchanged) ---
+// ============================================
+// FEEDBACK DISPLAY
+// ============================================
 
 function displayFeedback(fScore, pScore, feedback) {
     const list = document.getElementById('feedback-list');
@@ -365,11 +728,15 @@ function displayFeedback(fScore, pScore, feedback) {
         const li = document.createElement('li');
         const icon = item.type === 'success' ? '🏆' : '❌';
         
-        li.innerHTML = `<span style="font-weight: bold;">${icon} ${item.scoreType}-SCORE:</span> ${item.text}`;
+        li.innerHTML = `<span class="feedback-label">${icon} ${item.scoreType}-SCORE:</span> ${item.text}`;
         li.classList.add('feedback-item', item.type === 'success' ? 'feedback-success' : 'feedback-fail');
         list.appendChild(li);
     });
 }
+
+// ============================================
+// PROGRESS TRACKING & EXPORT
+// ============================================
 
 function saveProgress(fScore, pScore, lyric, title) {
     try {
@@ -384,14 +751,45 @@ function saveProgress(fScore, pScore, lyric, title) {
         savedProgress.push(newEntry);
         localStorage.setItem('lyricForgeProgress', JSON.stringify(savedProgress));
         
-        console.log("Progress Saved Successfully!");
-        
     } catch (e) {
-        console.error("Saving Error: Failed to write to localStorage. Progress will not be tracked.", e);
+        console.error("Saving Error:", e);
     }
 }
 
-function saveAndShare() {
+async function saveAndShare() {
+    // Use html2canvas for visual export
+    const scoreCard = document.getElementById('export-card');
+    
+    if (typeof html2canvas === 'undefined') {
+        // Fallback to text export
+        exportAsText();
+        return;
+    }
+    
+    try {
+        const canvas = await html2canvas(scoreCard, {
+            backgroundColor: '#1e3a8a',
+            scale: 2,
+            logging: false
+        });
+        
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lyric-forge-${new Date().toISOString().split('T')[0]}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    } catch (e) {
+        console.error("Export error:", e);
+        exportAsText();
+    }
+}
+
+function exportAsText() {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const recentScores = savedProgress.filter(e => e.date >= sevenDaysAgo);
     
@@ -407,24 +805,32 @@ function saveAndShare() {
     const lyric = document.getElementById('lyric-input').value;
     
     const content = `
-*** GEMINI LYRIC FORGE: DAILY REPORT CARD (V4.0) ***
+♊ GEMINI LYRIC FORGE V5.0 - SESSION REPORT
 Date: ${new Date().toLocaleDateString()}
 Challenge: ${currentChallenge.title}
 
---- TODAY'S SCORES ---
-Flow/Structure Score (F-Score): ${fScore}/100
-Poetry/Depth Score (P-Score): ${pScore}/100
-Synthesis Score (F x P): ${Math.round((fScore/100) * (pScore/100) * 100)}%
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TODAY'S SCORES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+F-Score (Structure):  ${fScore}/100
+P-Score (Poetry):     ${pScore}/100
+Synthesis (F × P):    ${Math.round((fScore/100) * (pScore/100) * 100)}%
 
---- PRESCRIPTIVE FEEDBACK ---
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRESCRIPTIVE FEEDBACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${feedbackText}
 
---- MASTERY TRAJECTORY (Last 7 Days) ---
-F-Score Average (Commercial Viability): ${avgF}%
-P-Score Average (Critical Depth): ${avgP}%
-(Goal is 85% on both for Synthesis Mastery.)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MASTERY TRAJECTORY (Last 7 Days)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+F-Score Average: ${avgF}%
+P-Score Average: ${avgP}%
+Goal: 85%+ on both for Synthesis Mastery
 
---- YOUR LYRIC ---
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+YOUR LYRIC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${lyric}
 `;
 
@@ -432,17 +838,28 @@ ${lyric}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `LyricForge_Report_${new Date().toISOString().split('T')[0]}.txt`;
+    a.download = `lyric-forge-${new Date().toISOString().split('T')[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
 
+// ============================================
+// INITIALIZATION
+// ============================================
+
 document.addEventListener('DOMContentLoaded', () => {
     const lyricInput = document.getElementById('lyric-input');
     if (lyricInput) {
         lyricInput.addEventListener('input', updateCounters);
     }
+    
+    // Mood/motif change triggers update
+    const moodSelect = document.getElementById('input-mood');
+    const motifSelect = document.getElementById('input-motif');
+    if (moodSelect) moodSelect.addEventListener('change', updateCounters);
+    if (motifSelect) motifSelect.addEventListener('change', updateCounters);
+    
     showView('dashboard-view');
 });
