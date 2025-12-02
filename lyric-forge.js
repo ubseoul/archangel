@@ -1,9 +1,9 @@
-// lyric-forge.js (Finalized V4.1 - Seamless Creative Engine - Fixed)
+// lyric-forge.js (Finalized V5.0 - Flow Mastery Fix)
 
 let currentChallenge = null;
 let savedProgress = JSON.parse(localStorage.getItem('lyricForgeProgress')) || [];
 
-// --- A. Utility Functions ---
+// --- A. Utility Functions (Unchanged) ---
 
 function estimateSyllables(word) {
     word = word.toLowerCase().replace(/[^a-z]/g, '');
@@ -30,23 +30,8 @@ function calculateAverageScores() {
     };
 }
 
-// --- B. UI & Navigation (FIXED: Ensures function runs only after elements exist) ---
-
-function showView(viewId) {
-    document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
-    
-    const targetView = document.getElementById(viewId);
-    if (targetView) {
-        targetView.classList.add('active');
-        if (viewId === 'dashboard-view') {
-            updateDashboardProgress();
-        }
-    }
-}
-
 function updateDashboardProgress() {
     const { avgF, avgP } = calculateAverageScores();
-    // Check for element existence before setting textContent (Robustness fix)
     const avgFElement = document.getElementById('avg-f-score');
     const avgPElement = document.getElementById('avg-p-score');
 
@@ -69,7 +54,6 @@ function updateCounters() {
     const avgSylPerLine = lineCount > 0 ? (totalSyllables / lineCount) : 0;
     const flowType = inferFlowStyle(avgSylPerLine);
 
-    // Check for element existence before setting textContent (The original error source fix)
     const lineCountElement = document.getElementById('line-count');
     const barCountElement = document.getElementById('bar-count');
     const sylCountElement = document.getElementById('syl-count');
@@ -96,7 +80,7 @@ function toggleInfo() {
     document.getElementById('info-section').classList.toggle('active');
 }
 
-// --- C. Challenge Definitions & Setup ---
+// --- C. Challenge Definitions & Setup (Unchanged) ---
 
 const CHALLENGES = {
     drake_structure: {
@@ -106,6 +90,7 @@ const CHALLENGES = {
         targetLines: 28,
         moodRequired: true,
         motifRequired: true, 
+        maxSylPerLine: 7 // New constraint for F-Score target
     },
     ocean_poetics: {
         title: "🌊 Poetic Workout: Depth (P-Score)",
@@ -170,7 +155,6 @@ function submitLyric() {
     const lyric = document.getElementById('lyric-input').value;
     const lines = getNonEmptyLines(lyric); 
     
-    // FIX 1: Retrieve values and check for empty string
     const mood = document.getElementById('input-mood').value;
     const motif = document.getElementById('input-motif').value;
     
@@ -179,7 +163,6 @@ function submitLyric() {
         return;
     }
     
-    // FIX 2: Ensure Mood and Motif are selected (Prevents ReferenceError on scoring functions)
     if (!mood || !motif) {
         alert("Please select both a Goal Mood and a Core Motif before scoring.");
         return;
@@ -211,6 +194,8 @@ function scoreSynthesisDrill(lines, mood, motif, feedback) {
     let pScore = 0;
     const lyricText = lines.join(' ').toLowerCase();
 
+    // --- F-Score Primary Checks (Max 100 points) ---
+    
     // 1. F-Score: Structural Compliance (Max 40 points)
     const structureConstraint = CHALLENGES.drake_structure.targetLines;
     if (lines.length >= structureConstraint - 4 && lines.length <= structureConstraint + 4) {
@@ -230,19 +215,29 @@ function scoreSynthesisDrill(lines, mood, motif, feedback) {
         feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Lexicon: Only used ${drakeWordsFound} lexicon words. **Action:** Incorporate at least 3 high-impact words (e.g., time, team, top).` });
     }
 
-    // 3. F-Score: Inferred Flow Style (Max 30 points)
-    const avgSylPerLine = lines.length > 0 ? lines.join(' ').split(/\s+/).reduce((sum, word) => sum + estimateSyllables(word), 0) / lines.length : 0;
-    const T = LEXICON.FLOW_SYLLABLE_THRESHOLDS;
+    // 3. F-Score: Flow Quality (Max 30 points) - NEW STRICT MONOSYLLABIC CHECK
+    const maxSylPerLine = CHALLENGES.drake_structure.maxSylPerLine; // Currently 7
+    let flowPenalty = false;
     
-    if (avgSylPerLine >= T.CONVERSATIONAL_MIN && avgSylPerLine <= T.CONVERSATIONAL_MAX) {
+    lines.forEach(line => {
+        const sylCount = line.split(/\s+/).reduce((sum, word) => sum + estimateSyllables(word), 0);
+        if (sylCount > maxSylPerLine) {
+            flowPenalty = true;
+        }
+    });
+
+    if (!flowPenalty) {
         fScore += 30;
-        feedback.push({ type: 'success', scoreType: 'F', text: `🥁 Flow: Inferred Conversational Flow (${avgSylPerLine.toFixed(1)} Syl/Line). Ideal for Drake's melodic hybrid.` });
+        feedback.push({ type: 'success', scoreType: 'F', text: `🥁 Flow: Achieved **Syllable Economy**! All lines were $\leq$ ${maxSylPerLine} Syl/Line. Ideal for melodic delivery.` });
     } else {
-        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: Density (${avgSylPerLine.toFixed(1)} Syl/Line) is too high/low. **Action:** Aim for 5-7 Syl/Line to achieve a relaxed, conversational rhythm.` });
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: **Syllable Economy Failure.** At least one line exceeded the max limit of ${maxSylPerLine} Syl/Line. **Action:** Edit down your words; aim for 5-7 Syl/Line to achieve a relaxed, conversational rhythm.` });
     }
+
 
     // --- DUAL CONSTRAINT: P-SCORE Check (Ocean's Imagery) (Max 30 points, affects PScore only) ---
     pScore = scoreImageryDensity(lines, pScore, feedback, motif, 'Synthesis');
+    
+    pScore = Math.min(100, pScore);
 
     return { fScore: Math.min(100, fScore), pScore: pScore, feedback: feedback };
 }
@@ -269,7 +264,7 @@ function scorePoeticWorkout(lines, mood, motif, feedback) {
     }
 
     // 2. P-SCORE: Imagery Cohesion (Max 40 points)
-    const targetSentimentKey = mood; // Use the selected mood key (NEGATIVE or POSITIVE)
+    const targetSentimentKey = mood; 
     const sentimentCount = LEXICON.SENTIMENT_WORDS[targetSentimentKey].filter(word => lyricText.includes(word)).length;
     
     const motifKey = motif.toUpperCase();
@@ -440,4 +435,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     showView('dashboard-view');
 });
-
