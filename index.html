@@ -195,9 +195,40 @@
                 <h3 style="margin-top: var(--space-xl);">💬 Prescriptive Feedback</h3>
                 <ul id="feedback-list"></ul>
                 
+                <!-- Analyzed Lyric with Issues Highlighted -->
+                <div style="margin-top: var(--space-xl);">
+                    <h3>📝 Your Lyric (Issues Highlighted)</h3>
+                    <div id="analyzed-lyric" style="
+                        background-color: var(--color-bg);
+                        padding: var(--space-lg);
+                        border-radius: var(--radius-lg);
+                        border: 2px solid var(--color-border);
+                        font-family: var(--font-sans);
+                        line-height: 1.8;
+                        white-space: pre-wrap;
+                        word-wrap: break-word;
+                        font-size: 0.95rem;
+                    "></div>
+                    <div style="margin-top: var(--space-sm); font-size: 0.875rem; color: var(--color-text-muted);">
+                        <strong>Legend:</strong>
+                        <span style="background-color: rgba(239, 68, 68, 0.2); padding: 2px 6px; border-radius: 4px; margin: 0 4px;">🔴 Abstract nouns</span>
+                        <span style="background-color: rgba(16, 185, 129, 0.2); padding: 2px 6px; border-radius: 4px; margin: 0 4px;">🟢 Concrete nouns</span>
+                        <span style="background-color: rgba(59, 130, 246, 0.2); padding: 2px 6px; border-radius: 4px; margin: 0 4px;">🔵 Motif words</span>
+                        <span style="background-color: rgba(245, 158, 11, 0.2); padding: 2px 6px; border-radius: 4px; margin: 0 4px;">🟡 Drake anchors</span>
+                    </div>
+                </div>
+                
                 <!-- Action Buttons -->
                 <div style="margin-top: var(--space-xl);">
-                    <button onclick="saveAndShare()">📸 Export Score Card (Image)</button>
+                    <button onclick="saveAndShare()" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                        📸 Export as Image (Camera Roll)
+                    </button>
+                    <div id="ios-help" style="display: none; background-color: var(--color-info-light); padding: var(--space-sm); border-radius: var(--radius-md); font-size: 0.875rem; color: #1e40af; margin: var(--space-sm) 0;">
+                        <strong>📱 iOS Tip:</strong> After clicking, choose "Save Image" in the share sheet to add to camera roll, or long-press the image and select "Add to Photos".
+                    </div>
+                    <button onclick="exportAsText()" style="background-color: var(--color-text-secondary);">
+                        📄 Export as Text File
+                    </button>
                     <button class="secondary" onclick="showView('dashboard-view')">🔄 New Challenge</button>
                 </div>
             </div>
