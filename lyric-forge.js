@@ -1,4 +1,4 @@
-/ lyric-forge.js (Finalized V5.0 - Final Synthesis Engine)
+// lyric-forge.js (Finalized V5.0 - Final Synthesis Engine)
 
 let currentChallenge = null;
 let savedProgress = JSON.parse(localStorage.getItem('lyricForgeProgress')) || [];
