@@ -1,4 +1,4 @@
-// lyric-forge.js (Finalized V4.4 - Final Strategy Guide Fix)
+// lyric-forge.js (Finalized V4.4 - FINAL STABILITY FIX)
 
 let currentChallenge = null;
 let savedProgress = JSON.parse(localStorage.getItem('lyricForgeProgress')) || [];
@@ -127,57 +127,42 @@ function startChallenge(type) {
     document.getElementById('input-mood').value = "";
     document.getElementById('input-motif').value = "";
     
-    // Inject relevant info content
-    document.getElementById('info-section').innerHTML = INFO_CONTENT[type].content;
-    document.getElementById('info-section').classList.remove('active'); 
-
+    // NOTE: Strategy Guide is now static in index.html and only toggles visibility.
+    
     updateCounters();
     showView('challenge-view');
 }
 
-// --- INFO CONTENT: FINAL MASTER GUIDE OVERHAUL ---
 const INFO_CONTENT = {
     drake_structure: {
         content: `
-            <h4>👑 MAX SCORE MASTERY GUIDE (Synthesis Drill)</h4>
-            <p>The goal is **Melodic Accessibility**. Your F-Score needs perfect compliance to pass the final $\mathbf{5-7}$ Syl/Line test.</p>
-
-            <h4 style="color: var(--color-primary);">Structure & Flow (F-SCORE: Commercial Viability)</h4>
+            <h4>Structure Strategy: The Sandwich Method (F-Score Value)</h4>
             <ul>
-                <li>**Flow Quality Check (30 Points):** Your density must be $\mathbf{5.0}$ to $\mathbf{7.0}$ Syl/Line. If it is $\mathbf{> 7.0}$, you lose the points. **Action:** Apply Monosyllabic Economy (write less).</li>
-                <li>**Structure Targets (40 Points):** Hit the $\mathbf{8/12/8}$ line count ($\mathbf{28}$ lines) for maximum Hook Frequency.</li>
-                <li>**Lexicon Targets (30 Points):** Integrate $\mathbf{\ge 3}$ words from the DRAKE'S HIGH-IMPACT LEXICON ($\text{time, love, god, plan, city, team, real, yeah, bottom, top}$).</li>
+                <li>**Action:** Aim for short verses (max 12 lines) to keep the hook frequency high. This maximizes commercial viability.</li>
+                <li>**Dual Constraint:** Use your selected Motif (Car/Color/Time) frequently to ground the accessible topic in specific, Ocean-style imagery.</li>
             </ul>
-
-            <h4 style="color: #f472b6;">Poetry Dual Constraint (P-SCORE: Narrative Depth)</h4>
-            <p>This is your synthesis bonus. You must ground the commercial topic in specific imagery.</p>
+            <h4>Flow Strategy: Melodic Accessibility (The $\mathbf{5-7}$ Syl/Line Rule)</h4>
             <ul>
-                <li>**The Specificity Rule:** You must use $\mathbf{Zero}$ $\text{Abstract Nouns}$ (sadness, anger, feeling, passion, trust).</li>
-                <li>**Imagery Action:** Integrate $\mathbf{\ge 3}$ words from your **Personalized Lexicon** ($\text{wagyu, toblerone, honeycomb, scars, shadows, texture}$).</li>
+                <li>**Insight:** The tool infers your flow from the **Syl/Line** status. Aim for 5-7 Syl/Line to maintain a relaxed, conversational rhythm (Drake's signature).</li>
             </ul>
         `
     },
     ocean_poetics: {
         content: `
-            <h4>👑 MAX SCORE MASTERY GUIDE (Poetic Workout)</h4>
-            <p>The goal is **Cohesive Metaphor**—grounding emotion in specific, high-texture imagery while avoiding commercial predictability.</p>
-
-            <h4 style="color: #f472b6;">Poetry & Specificity (P-SCORE: Narrative Depth)</h4>
+            <h4>Lexical Specificity (P-Score Value)</h4>
             <ul>
-                <li>**Specificity Filter:** You **must** achieve $\mathbf{Zero}$ or $\mathbf{One}$ $\text{Abstract Noun}$ violation. **Action:** Swap abstract feelings for sensory details (e.g., 'cold texture').</li>
-                <li>**Cohesion Check:** Ensure your chosen $\text{Motif}$ ($\text{CAR/TIME}$) is linked to your $\text{Mood}$ ($\text{NEGATIVE/POSITIVE}$) with high density ($\mathbf{\ge 3}$ sentiment words and $\mathbf{\ge 2}$ motif words).</li>
-                <li>**Narrative Subversion:** Maintain a $\mathbf{Linear}$ narrative path by avoiding all repetition of lines over 5 syllables.</li>
+                <li>**STRICT PENALTY:** The tool will penalize you heavily for using Abstract Nouns (e.g., sadness, passion).</li>
+                <li>**Action:** Replace abstract words with **concrete imagery** (e.g., swap 'sadness' for 'cold texture' or 'oil marks').</li>
             </ul>
-            
-            <h4 style="color: var(--color-primary);">Structural Constraint (F-SCORE: Discipline)</h4>
+            <h4>Narrative Strategy: Structural Subversion</h4>
             <ul>
-                <li>**Action:** End your final $\mathbf{4}$ lines with a strict $\text{AABB}$ couplet to demonstrate structural control after the poetic journey.</li>
+                <li>**Value:** This creates layers of meaning and intimacy. **Action:** Avoid repeating any line longer than 5 words. The lyric must move linearly from A to B.</li>
             </ul>
         `
     }
 };
 
-// --- D. Core Scoring Logic (Rest of the file remains unchanged) ---
+// --- D. Core Scoring Logic ---
 
 function submitLyric() {
     const lyric = document.getElementById('lyric-input').value;
@@ -250,20 +235,16 @@ function scoreSynthesisDrill(lines, mood, motif, feedback) {
         feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Lexicon: Only used ${drakeWordsFound} lexicon words. **Action:** Incorporate at least 3 high-impact words (e.g., time, team, top).` });
     }
 
-    // 3. F-Score: Flow Quality (Max 30 points) - FINAL V5.0 STRICT MELODIC TARGET
+    // 3. F-Score: Flow Quality (Max 30 points) - FINAL V4.4 REALISTIC FLOW FIX
     
-    if (avgSylPerLine >= T.CONVERSATIONAL_MIN && avgSylPerLine <= T.CONVERSATIONAL_MAX) {
-        // Full Pass: Conversational Flow (5-7 Syl)
+    if (avgSylPerLine >= T.CONVERSATIONAL_MIN && avgSylPerLine <= 9.5) { // Threshold raised to 9.5 based on test data
+        // Full Pass: Accepting 5 - 9.5 Syl/Line as Melodic Flow due to estimator limitations
         fScore += 30;
-        feedback.push({ type: 'success', scoreType: 'F', text: `🥁 Flow: Achieved Conversational Flow (${avgSylPerLine.toFixed(1)} Syl/Line). Perfect for melodic delivery. (30 points)` });
-    } else if (lineCount >= 24 && avgSylPerLine >= T.CONVERSATIONAL_MAX + 0.1 && avgSylPerLine <= T.TRIPLET_MAX + 0.1) {
-         // Partial Pass: Consistent Dense Flow (7.1 - 11.1 Syl) - Reward for consistent rhythmic effort
-        fScore += 10; 
-        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: Density (${avgSylPerLine.toFixed(1)} Syl/Line) is too high. **Action:** To maximize score, ruthlessly edit syllables down to $\mathbf{5-7}$ Syl/Line.` });
+        feedback.push({ type: 'success', scoreType: 'F', text: `🥁 Flow: Achieved Melodic Flow (${avgSylPerLine.toFixed(1)} Syl/Line). Ideal for melodic delivery. (30 points)` });
     } else {
-        // Fail: Unstable Flow or density outside both target zones
+        // Fail: Unstable Flow (below 5) or too high (above 9.5)
         fScore += 0;
-        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: Density (${avgSylPerLine.toFixed(1)} Syl/Line) is too high/low. **Action:** Aim for 5-7 Syl/Line to achieve a relaxed, conversational rhythm.` });
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: Density (${avgSylPerLine.toFixed(1)} Syl/Line) is too high/low. **Action:** Aim for 5-7 Syl/Line (or max 9.5 in the tool) to achieve a relaxed, conversational rhythm.` });
     }
 
 
