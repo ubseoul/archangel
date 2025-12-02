@@ -22,6 +22,29 @@
         .info-panel ul { padding-left: 20px; }
         .info-panel li { margin-bottom: 5px; }
         .info-toggle { background: none; border: none; color: #1e3a8a; font-weight: bold; text-decoration: underline; cursor: pointer; padding: 5px 0; display: block; text-align: right; }
+        
+        /* Table Styling for Lexicon */
+        .lexicon-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        .lexicon-table th, .lexicon-table td {
+            border: 1px solid #e5e7eb;
+            padding: 6px;
+            text-align: left;
+        }
+        .lexicon-table th {
+            background-color: #eef2ff;
+            color: var(--color-primary);
+        }
+        .lexicon-list {
+            font-family: monospace;
+            font-weight: 600;
+            color: #b91c1c; /* Red for high focus */
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
@@ -31,33 +54,83 @@
         <p class="app-subtitle">Engineered Synthesis: Drake's Structure meets Ocean's Poetry</p>
         
         <div id="dashboard-view" class="view active">
-            <div class="card">
-                <h2>📈 Synthesis Progress</h2>
-                <div class="score-card">
-                    <div class="score-box f-score-box">F-Score Mastery: <strong id="avg-f-score">0%</strong></div>
-                    <div class="score-box p-score-box">P-Score Mastery: <strong id="avg-p-score">0%</strong></div>
-                </div>
-                <p class="text-center" style="margin-top: 15px; font-weight: 600;">Goal: Achieve 85% on both for Synthesis Mastery.</p>
+            
+            <div class="card" style="border-left: 5px solid #000; padding: 15px;">
+                <h2 style="color: #000; font-size: 1.5em; text-align: center;">👑 MAX SCORE MASTERY GUIDE</h2>
+                <p class="text-center">To achieve $\mathbf{100\%}$ Synthesis Mastery, you must pass all checks in both domains.</p>
             </div>
+            
+            <!-- F-SCORE IN-DEPTH SECTION -->
+            <div class="card card-accent" style="margin-top: 10px;">
+                <h3 style="color: var(--color-primary); font-size: 1.3em;">Structure & Flow (F-SCORE: Commercial Viability)</h3>
+                <p>The goal is **Melodic Accessibility**. Your final $\mathbf{30}$ points depend on beating your $\mathbf{9.0+}$ Syl/Line habit.</p>
+                
+                <h4 style="color: var(--color-primary); margin-top: 10px;">A. Flow Quality Check (30 Points)</h4>
+                <ul>
+                    <li><strong>Action:</strong> Use **Monosyllabic Economy**. Edit every word until your Flow Status reads $\mathbf{\leq 7.0}$ Syl/Line. This is the only range that grants full points.</li>
+                </ul>
+
+                <h4 style="color: var(--color-primary); margin-top: 10px;">B. Lexicon Targets & Discipline (70 Points)</h4>
+                <ul>
+                    <li><strong>Line Count:</strong> Hit the $\mathbf{8/12/8}$ line count ($\mathbf{28}$ lines) for maximum Hook Frequency.</li>
+                    <li><strong>Discipline Constraint:</strong> End your final $\mathbf{4}$ lines with a strict $\text{AABB}$ couplet.</li>
+                </ul>
+                
+                <table class="lexicon-table">
+                    <thead>
+                        <tr><th colspan="2">DRAKE'S HIGH-IMPACT LEXICON (Need $\mathbf{\ge 3}$ words)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Words:</td><td class="lexicon-list">time, love, god, plan, city, team, real, yeah, bottom, top</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- P-SCORE IN-DEPTH SECTION -->
+            <div class="card card-accent" style="border-left-color: #f472b6;">
+                <h3 style="color: #f472b6; font-size: 1.3em;">Poetry & Specificity (P-SCORE: Narrative Depth)</h3>
+                <p>The goal is **Cohesive Metaphor**—grounding emotion in your unique, specific imagery.</p>
+                
+                <h4 style="color: #f472b6; margin-top: 10px;">A. Lexical Purity Check (40 Points)</h4>
+                <ul>
+                    <li><strong>Zero Tolerance Rule:</strong> Do not use more than one **Abstract Noun**.</li>
+                </ul>
+                <table class="lexicon-table">
+                    <thead>
+                        <tr><th>PENALIZED WORDS</th><th>HIGH-VALUE REPLACERS ($\mathbf{\ge 3}$ needed)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>sadness, anger, feeling, passion, trust, anxiety, joy, truth</td>
+                        <td class="lexicon-list">wagyu, toblerone, honeycomb, provolone, scars, shadows, texture, crystal</td></tr>
+                    </tbody>
+                </table>
+
+                <h4 style="color: #f472b6; margin-top: 10px;">B. Cohesion & Imagery (60 Points)</h4>
+                <ul>
+                    <li><strong>Action:</strong> Ensure your selected **Mood** (Positive/Negative) is linked to your **Motif** (Car/Color/Time) with high density ($\mathbf{\ge 3}$ sentiment words and $\mathbf{\ge 2}$ motif words).</li>
+                    <li><strong>Narrative Subversion:</strong> Avoid repetition. Maintain a $\mathbf{linear}$ narrative path for critical intimacy.</li>
+                </ul>
+            </div>
+
 
             <div class="module-selector card card-accent">
                 <h2>✍️ Start Daily Challenge</h2>
                 <button class="drake-btn" onclick="startChallenge('drake_structure')">🎯 Synthesis Drill: Melodic Flow (F-Score)</button>
                 <button class="ocean-btn" onclick="startChallenge('ocean_poetics')">🌊 Poetic Workout: Depth (P-Score)</button>
             </div>
-            
-            <p class="text-center" style="margin-top: 20px; font-size: 0.9em; color: #1e3a8a;">*The F-Score now strictly enforces Melodic Flow (5-7 Syl/Line).*</p>
         </div>
 
         <div id="challenge-view" class="view">
             <h2 id="challenge-title"></h2>
             <p id="challenge-prompt" class="prompt"></p>
             
-            <button class="info-toggle" onclick="toggleInfo()">ℹ️ Strategy Guide</button>
-            <div id="info-section" class="info-panel"></div>
+            <button class="info-toggle" onclick="toggleInfo()">ℹ️ Strategy Guide</button> 
+            <div id="info-section" class="info-panel">
+                 <!-- The older detailed guide will load here when the button is pressed -->
+            </div>
             
             <div class="metadata-inputs">
-                <!-- Corrected values for Mood to align with Lexicon keys -->
+                <!-- Dropdowns are necessary for P-Score context -->
                 <select id="input-mood">
                     <option value="" disabled selected>Goal Mood (P-Score Context)</option>
                     <option value="NEGATIVE">Sad/Melancholy/Conflict</option>
@@ -82,7 +155,7 @@
             </div>
             
             <button id="submit-btn" onclick="submitLyric()">Analyze & Score</button>
-            <button id="cancel-btn" class="secondary" onclick="showView('dashboard-view')">Cancel</button>
+            <button class="secondary" onclick="showView('dashboard-view')">Cancel</button>
         </div>
 
         <div id="results-view" class="view">
