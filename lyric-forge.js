@@ -585,6 +585,9 @@ function submitLyric() {
         synthesisElement.textContent = synthesisScore;
     }
     
+    // Display analyzed lyric with highlighting
+    displayAnalyzedLyric(lyric, mood, motif);
+    
     displayFeedback(fScore, pScore, feedback);
     saveProgress(fScore, pScore, lyric, currentChallenge.title);
     showView('results-view');
@@ -772,6 +775,71 @@ function scoreRhymeDiscipline(lines, currentScore, feedback) {
 // FEEDBACK DISPLAY
 // ============================================
 
+function displayAnalyzedLyric(lyric, mood, motif) {
+    const analyzedLyricDiv = document.getElementById('analyzed-lyric');
+    if (!analyzedLyricDiv) return;
+    
+    const lyricText = lyric.toLowerCase();
+    
+    // Get all words to highlight
+    const allAbstracts = LEXICON.getAllAbstractNouns();
+    const abstractsFound = allAbstracts.filter(word => lyricText.includes(word));
+    
+    const allConcrete = LEXICON.getAllConcreteWords();
+    const concreteFound = allConcrete.filter(word => lyricText.includes(word));
+    
+    const drakeWords = LEXICON.DRAKE_LEXICON_WORDS.filter(word => lyricText.includes(word));
+    
+    let motifWords = [];
+    if (motif && LEXICON.SEMANTIC_MOTIFS[motif]) {
+        motifWords = LEXICON.getFlatMotifWords(motif).filter(word => lyricText.includes(word));
+    }
+    
+    // Create highlighting map (priority: abstract > concrete > motif > drake)
+    let html = lyric;
+    const wordMap = new Map();
+    
+    // Add all words with their types (priority order matters)
+    abstractsFound.forEach(word => wordMap.set(word, 'abstract'));
+    concreteFound.forEach(word => {
+        if (!wordMap.has(word)) wordMap.set(word, 'concrete');
+    });
+    motifWords.forEach(word => {
+        if (!wordMap.has(word)) wordMap.set(word, 'motif');
+    });
+    drakeWords.forEach(word => {
+        if (!wordMap.has(word)) wordMap.set(word, 'drake');
+    });
+    
+    // Sort by length (longest first) to avoid partial replacements
+    const sortedWords = Array.from(wordMap.entries()).sort((a, b) => b[0].length - a[0].length);
+    
+    // Apply highlighting
+    sortedWords.forEach(([word, type]) => {
+        const regex = new RegExp(`\\b${word}\\b`, 'gi');
+        html = html.replace(regex, match => {
+            let style = '';
+            let emoji = '';
+            if (type === 'abstract') {
+                style = 'background-color: rgba(239, 68, 68, 0.3); color: #991b1b; font-weight: 600; padding: 2px 4px; border-radius: 3px; border-bottom: 2px solid #ef4444;';
+                emoji = '';
+            } else if (type === 'concrete') {
+                style = 'background-color: rgba(16, 185, 129, 0.2); color: #065f46; padding: 2px 4px; border-radius: 3px;';
+                emoji = '';
+            } else if (type === 'motif') {
+                style = 'background-color: rgba(59, 130, 246, 0.2); color: #1e40af; font-weight: 600; padding: 2px 4px; border-radius: 3px;';
+                emoji = '';
+            } else if (type === 'drake') {
+                style = 'background-color: rgba(245, 158, 11, 0.2); color: #78350f; font-weight: 600; padding: 2px 4px; border-radius: 3px;';
+                emoji = '';
+            }
+            return `<span style="${style}">${match}</span>`;
+        });
+    });
+    
+    analyzedLyricDiv.innerHTML = html;
+}
+
 function displayFeedback(fScore, pScore, feedback) {
     const list = document.getElementById('feedback-list');
     list.innerHTML = '';
@@ -811,34 +879,108 @@ function saveProgress(fScore, pScore, lyric, title) {
 }
 
 async function saveAndShare() {
-    // Use html2canvas for visual export
-    const scoreCard = document.getElementById('export-card');
-    
+    // Check if html2canvas is available
     if (typeof html2canvas === 'undefined') {
-        // Fallback to text export
+        console.warn('html2canvas not loaded, falling back to text export');
         exportAsText();
         return;
     }
     
+    // Populate export card data
+    const fScore = document.getElementById('f-score').textContent;
+    const pScore = document.getElementById('p-score').textContent;
+    const synthesis = document.getElementById('synthesis-score').textContent;
+    
+    document.getElementById('export-f-score').textContent = fScore;
+    document.getElementById('export-p-score').textContent = pScore;
+    document.getElementById('export-synthesis').textContent = synthesis;
+    document.getElementById('export-date').textContent = new Date().toLocaleDateString();
+    
+    const exportCard = document.getElementById('export-card');
+    exportCard.style.display = 'block';
+    
     try {
-        const canvas = await html2canvas(scoreCard, {
-            backgroundColor: '#1e3a8a',
+        // Generate canvas
+        const canvas = await html2canvas(exportCard, {
+            backgroundColor: '#1e40af',
             scale: 2,
-            logging: false
+            logging: false,
+            width: 1080,
+            height: 1920
         });
         
-        canvas.toBlob(blob => {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `lyric-forge-${new Date().toISOString().split('T')[0]}.png`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
-    } catch (e) {
-        console.error("Export error:", e);
+        exportCard.style.display = 'none';
+        
+        // Convert to blob
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                console.error('Failed to create blob');
+                exportAsText();
+                return;
+            }
+            
+            const fileName = `lyric-forge-${new Date().toISOString().split('T')[0]}.png`;
+            
+            // iOS/Safari: Try native share API first (saves to camera roll)
+            if (navigator.share && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                try {
+                    const file = new File([blob], fileName, { type: 'image/png' });
+                    await navigator.share({
+                        files: [file],
+                        title: 'Gemini Lyric Forge Score',
+                        text: `F-Score: ${fScore}/100 | P-Score: ${pScore}/100 | Synthesis: ${synthesis}%`
+                    });
+                    console.log('✅ Shared successfully via iOS Share Sheet');
+                    return;
+                } catch (shareError) {
+                    console.log('Share sheet cancelled or failed, trying download...');
+                }
+            }
+            
+            // Fallback: Standard download (works on desktop and Android)
+            try {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                
+                console.log('✅ Downloaded successfully');
+                
+                // Show success message
+                alert('✅ Score card exported! Check your Downloads folder.');
+                
+            } catch (downloadError) {
+                console.error('Download failed:', downloadError);
+                
+                // Last resort: Open in new tab (iOS fallback)
+                if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                    const url = URL.createObjectURL(blob);
+                    const newWindow = window.open(url, '_blank');
+                    if (newWindow) {
+                        alert('📸 Score card opened in new tab. Long-press the image and select "Add to Photos" to save to camera roll.');
+                    } else {
+                        alert('❌ Could not open image. Please allow pop-ups and try again, or use the text export option.');
+                        exportAsText();
+                    }
+                } else {
+                    exportAsText();
+                }
+            }
+        }, 'image/png', 1.0);
+        
+    } catch (error) {
+        console.error('Export error:', error);
+        exportCard.style.display = 'none';
+        alert('❌ Image export failed. Downloading text version instead.');
         exportAsText();
     }
 }
@@ -914,6 +1056,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const motifSelect = document.getElementById('input-motif');
     if (moodSelect) moodSelect.addEventListener('change', updateCounters);
     if (motifSelect) motifSelect.addEventListener('change', updateCounters);
+    
+    // Show iOS help text if on iOS
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        const iosHelp = document.getElementById('ios-help');
+        if (iosHelp) iosHelp.style.display = 'block';
+    }
     
     showView('dashboard-view');
 });
