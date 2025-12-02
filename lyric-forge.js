@@ -1,4 +1,4 @@
-// lyric-forge.js (Finalized V5.0 - Flow Mastery Fix)
+// lyric-forge.js (Finalized V4.3 - Final Stability Fix)
 
 let currentChallenge = null;
 let savedProgress = JSON.parse(localStorage.getItem('lyricForgeProgress')) || [];
@@ -90,7 +90,6 @@ const CHALLENGES = {
         targetLines: 28,
         moodRequired: true,
         motifRequired: true, 
-        maxSylPerLine: 7 // New constraint for F-Score target
     },
     ocean_poetics: {
         title: "🌊 Poetic Workout: Depth (P-Score)",
@@ -194,16 +193,22 @@ function scoreSynthesisDrill(lines, mood, motif, feedback) {
     let pScore = 0;
     const lyricText = lines.join(' ').toLowerCase();
 
+    // Calculate Syl/Line Average (Needed for Flow Scoring)
+    const avgSylPerLine = lines.length > 0 ? lines.join(' ').split(/\s+/).reduce((sum, word) => sum + estimateSyllables(word), 0) / lines.length : 0;
+    const T = LEXICON.FLOW_SYLLABLE_THRESHOLDS;
+
     // --- F-Score Primary Checks (Max 100 points) ---
     
     // 1. F-Score: Structural Compliance (Max 40 points)
     const structureConstraint = CHALLENGES.drake_structure.targetLines;
-    if (lines.length >= structureConstraint - 4 && lines.length <= structureConstraint + 4) {
+    const lineCount = lines.length;
+    
+    if (lineCount >= structureConstraint - 4 && lineCount <= structureConstraint + 4) {
         fScore += 40;
-        feedback.push({ type: 'success', scoreType: 'F', text: `🏆 Structure: Line count (${lines.length}) is near the target. Commercial Algorithm structure met.` }); 
+        feedback.push({ type: 'success', scoreType: 'F', text: `🏆 Structure: Line count (${lineCount}) is near the target. Commercial Algorithm structure met.` }); 
     } else {
         fScore += 5; 
-        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Structure: Line count of ${lines.length} is far from the target. **Action:** Aim for ${structureConstraint} lines (8/12/8) to meet the hook-frequency goal.` }); 
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Structure: Line count of ${lineCount} is far from the target. **Action:** Aim for ${structureConstraint} lines (8/12/8) to meet the hook-frequency goal.` }); 
     }
 
     // 2. F-Score: Lexicon Use (Max 30 points)
@@ -215,22 +220,19 @@ function scoreSynthesisDrill(lines, mood, motif, feedback) {
         feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Lexicon: Only used ${drakeWordsFound} lexicon words. **Action:** Incorporate at least 3 high-impact words (e.g., time, team, top).` });
     }
 
-    // 3. F-Score: Flow Quality (Max 30 points) - NEW STRICT MONOSYLLABIC CHECK
-    const maxSylPerLine = CHALLENGES.drake_structure.maxSylPerLine; // Currently 7
-    let flowPenalty = false;
+    // 3. F-Score: Flow Quality (Max 30 points) - FINAL FLOW FIX (V4.3)
     
-    lines.forEach(line => {
-        const sylCount = line.split(/\s+/).reduce((sum, word) => sum + estimateSyllables(word), 0);
-        if (sylCount > maxSylPerLine) {
-            flowPenalty = true;
-        }
-    });
-
-    if (!flowPenalty) {
+    if (avgSylPerLine >= T.CONVERSATIONAL_MIN && avgSylPerLine <= T.CONVERSATIONAL_MAX) {
+        // Pass: Conversational Flow (5-7 Syl)
         fScore += 30;
-        feedback.push({ type: 'success', scoreType: 'F', text: `🥁 Flow: Achieved **Syllable Economy**! All lines were $\leq$ ${maxSylPerLine} Syl/Line. Ideal for melodic delivery.` });
+        feedback.push({ type: 'success', scoreType: 'F', text: `🥁 Flow: Achieved Conversational Flow (${avgSylPerLine.toFixed(1)} Syl/Line). Perfect for melodic delivery.` });
+    } else if (lineCount >= 24 && avgSylPerLine >= 7.5 && avgSylPerLine <= 11.5) {
+         // FINAL FIX: This pass awards partial points for consistent density when structure/lexicon passed.
+        fScore += 20; 
+        feedback.push({ type: 'success', scoreType: 'F', text: `⚠️ Flow: Consistent Dense Flow (${avgSylPerLine.toFixed(1)} Syl/Line) detected. **Action:** To maximize score, reduce density to 5-7 Syl/Line for maximum accessibility.` });
     } else {
-        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: **Syllable Economy Failure.** At least one line exceeded the max limit of ${maxSylPerLine} Syl/Line. **Action:** Edit down your words; aim for 5-7 Syl/Line to achieve a relaxed, conversational rhythm.` });
+        // Fail: Unstable Flow or density outside both target zones
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: Density (${avgSylPerLine.toFixed(1)} Syl/Line) is too high/low. **Action:** Aim for 5-7 Syl/Line to achieve a relaxed, conversational rhythm.` });
     }
 
 
@@ -300,7 +302,8 @@ function scoreImageryDensity(lines, currentScore, feedback, motif, challengeType
     const lyricText = lines.join(' ').toLowerCase();
     const concreteReplaced = LEXICON.CONCRETE_REPLACERS.filter(word => lyricText.includes(word)).length;
     
-    if (concreteReplaced >= 4) {
+    // Final goal: Require 3 concrete replacers for the max 30 points
+    if (concreteReplaced >= 3) {
         currentScore += 30; // 30 bonus points for deep imagery
         feedback.push({ type: 'success', scoreType: 'P', text: `💎 **DUAL CONSTRAINT** (Ocean Imagery): Used ${concreteReplaced} high-impact imagery words. Excellent blending of commercial structure with poetic depth.` });
     } else if (concreteReplaced >= 2) {
@@ -338,13 +341,12 @@ function scoreRhymeDiscipline(lines, currentScore, feedback, challengeType) {
 }
 
 
-// --- E. Progress Tracking and Sharing ---
+// --- E. Progress Tracking and Sharing (Unchanged) ---
 
 function displayFeedback(fScore, pScore, feedback) {
     const list = document.getElementById('feedback-list');
     list.innerHTML = '';
     
-    // Sort feedback by score type for clarity
     const sortedFeedback = feedback.sort((a, b) => (a.scoreType > b.scoreType) ? 1 : -1);
 
     sortedFeedback.forEach(item => {
@@ -378,7 +380,6 @@ function saveProgress(fScore, pScore, lyric, title) {
 }
 
 function saveAndShare() {
-    // Calculate 7-day average for Report Card
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const recentScores = savedProgress.filter(e => e.date >= sevenDaysAgo);
     
@@ -415,7 +416,6 @@ P-Score Average (Critical Depth): ${avgP}%
 ${lyric}
 `;
 
-    // Download logic (Creates a shareable TXT file)
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -428,7 +428,6 @@ ${lyric}
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // We add the input listener here since DOMContentLoaded ensures the element exists.
     const lyricInput = document.getElementById('lyric-input');
     if (lyricInput) {
         lyricInput.addEventListener('input', updateCounters);
