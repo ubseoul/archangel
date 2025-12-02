@@ -1,4 +1,4 @@
-// lyric-forge.js (Finalized V4.4 - FINAL DISPLAY FIX)
+// lyric-forge.js (Finalized V4.4 - Final Strategy Guide Fix)
 
 let currentChallenge = null;
 let savedProgress = JSON.parse(localStorage.getItem('lyricForgeProgress')) || [];
@@ -135,36 +135,49 @@ function startChallenge(type) {
     showView('challenge-view');
 }
 
+// --- INFO CONTENT: FINAL MASTER GUIDE OVERHAUL ---
 const INFO_CONTENT = {
     drake_structure: {
         content: `
-            <h4>Structure Strategy: The Sandwich Method (F-Score Value)</h4>
+            <h4>👑 MAX SCORE MASTERY GUIDE (Synthesis Drill)</h4>
+            <p>The goal is **Melodic Accessibility**. Your F-Score needs perfect compliance to pass the final $\mathbf{5-7}$ Syl/Line test.</p>
+
+            <h4 style="color: var(--color-primary);">Structure & Flow (F-SCORE: Commercial Viability)</h4>
             <ul>
-                <li>**Action:** Aim for short verses (max 12 lines) to keep the hook frequency high. This maximizes commercial viability.</li>
-                <li>**Dual Constraint:** Use your selected Motif (Car/Color/Time) frequently to ground the accessible topic in specific, Ocean-style imagery.</li>
+                <li>**Flow Quality Check (30 Points):** Your density must be $\mathbf{5.0}$ to $\mathbf{7.0}$ Syl/Line. If it is $\mathbf{> 7.0}$, you lose the points. **Action:** Apply Monosyllabic Economy (write less).</li>
+                <li>**Structure Targets (40 Points):** Hit the $\mathbf{8/12/8}$ line count ($\mathbf{28}$ lines) for maximum Hook Frequency.</li>
+                <li>**Lexicon Targets (30 Points):** Integrate $\mathbf{\ge 3}$ words from the DRAKE'S HIGH-IMPACT LEXICON ($\text{time, love, god, plan, city, team, real, yeah, bottom, top}$).</li>
             </ul>
-            <h4>Flow Strategy: Melodic Accessibility (The $\mathbf{5-7}$ Syl/Line Rule)</h4>
+
+            <h4 style="color: #f472b6;">Poetry Dual Constraint (P-SCORE: Narrative Depth)</h4>
+            <p>This is your synthesis bonus. You must ground the commercial topic in specific imagery.</p>
             <ul>
-                <li>**Insight:** The tool infers your flow from the **Syl/Line** status. Aim for 5-7 Syl/Line to maintain a relaxed, conversational rhythm (Drake's signature).</li>
+                <li>**The Specificity Rule:** You must use $\mathbf{Zero}$ $\text{Abstract Nouns}$ (sadness, anger, feeling, passion, trust).</li>
+                <li>**Imagery Action:** Integrate $\mathbf{\ge 3}$ words from your **Personalized Lexicon** ($\text{wagyu, toblerone, honeycomb, scars, shadows, texture}$).</li>
             </ul>
         `
     },
     ocean_poetics: {
         content: `
-            <h4>Lexical Specificity (P-Score Value)</h4>
+            <h4>👑 MAX SCORE MASTERY GUIDE (Poetic Workout)</h4>
+            <p>The goal is **Cohesive Metaphor**—grounding emotion in specific, high-texture imagery while avoiding commercial predictability.</p>
+
+            <h4 style="color: #f472b6;">Poetry & Specificity (P-SCORE: Narrative Depth)</h4>
             <ul>
-                <li>**STRICT PENALTY:** The tool will penalize you heavily for using Abstract Nouns (e.g., sadness, passion).</li>
-                <li>**Action:** Replace abstract words with **concrete imagery** (e.g., swap 'sadness' for 'cold texture' or 'oil marks').</li>
+                <li>**Specificity Filter:** You **must** achieve $\mathbf{Zero}$ or $\mathbf{One}$ $\text{Abstract Noun}$ violation. **Action:** Swap abstract feelings for sensory details (e.g., 'cold texture').</li>
+                <li>**Cohesion Check:** Ensure your chosen $\text{Motif}$ ($\text{CAR/TIME}$) is linked to your $\text{Mood}$ ($\text{NEGATIVE/POSITIVE}$) with high density ($\mathbf{\ge 3}$ sentiment words and $\mathbf{\ge 2}$ motif words).</li>
+                <li>**Narrative Subversion:** Maintain a $\mathbf{Linear}$ narrative path by avoiding all repetition of lines over 5 syllables.</li>
             </ul>
-            <h4>Narrative Strategy: Structural Subversion</h4>
+            
+            <h4 style="color: var(--color-primary);">Structural Constraint (F-SCORE: Discipline)</h4>
             <ul>
-                <li>**Value:** This creates layers of meaning and intimacy. **Action:** Avoid repeating any line longer than 5 words. The lyric must move linearly from A to B.</li>
+                <li>**Action:** End your final $\mathbf{4}$ lines with a strict $\text{AABB}$ couplet to demonstrate structural control after the poetic journey.</li>
             </ul>
         `
     }
 };
 
-// --- D. Core Scoring Logic ---
+// --- D. Core Scoring Logic (Rest of the file remains unchanged) ---
 
 function submitLyric() {
     const lyric = document.getElementById('lyric-input').value;
@@ -183,26 +196,23 @@ function submitLyric() {
         return;
     }
 
-    let result = {};
+    let fScore = 0;
+    let pScore = 0;
+    let feedback = [];
 
     if (currentChallenge.scoreType === 'F') {
-        result = scoreSynthesisDrill(lines, mood, motif, []);
+        ({ fScore, pScore, feedback } = scoreSynthesisDrill(lines, mood, motif, feedback));
     } else if (currentChallenge.scoreType === 'P') {
-        result = scorePoeticWorkout(lines, mood, motif, []);
+        ({ fScore, pScore, feedback } = scorePoeticWorkout(lines, mood, motif, feedback));
     }
 
-    // --- FINAL DISPLAY AND SAVING SEQUENCE ---
+    document.getElementById('f-score').textContent = fScore;
+    document.getElementById('p-score').textContent = pScore;
     
-    // 1. Update HTML Elements with final results (Must happen before saving)
-    document.getElementById('f-score').textContent = result.fScore;
-    document.getElementById('p-score').textContent = result.pScore;
-    
-    // 2. Display Feedback and show the results view
-    displayFeedback(result.fScore, result.pScore, result.feedback);
+    displayFeedback(fScore, pScore, feedback);
     showView('results-view');
 
-    // 3. Save the session data locally
-    saveProgress(result.fScore, result.pScore, lyric, currentChallenge.title);
+    saveProgress(fScore, pScore, lyric, currentChallenge.title);
 }
 
 // --- SYNTHESIS DRILL (F-Score Focus with P-Score Dual Constraint) ---
@@ -266,7 +276,7 @@ function scoreSynthesisDrill(lines, mood, motif, feedback) {
 }
 
 
-// --- POETIC WORKOUT (P-Score Focus with F-Score Dual Constraint) ---
+// --- POETIC WORKOUT (P-SCORE Focus with F-Score Dual Constraint) ---
 
 function scorePoeticWorkout(lines, mood, motif, feedback) {
     let fScore = 0;
@@ -362,7 +372,7 @@ function scoreRhymeDiscipline(lines, currentScore, feedback, challengeType) {
 }
 
 
-// --- E. Progress Tracking and Sharing ---
+// --- E. Progress Tracking and Sharing (Unchanged) ---
 
 function displayFeedback(fScore, pScore, feedback) {
     const list = document.getElementById('feedback-list');
