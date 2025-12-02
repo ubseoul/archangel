@@ -490,6 +490,60 @@ function showAbstractWords() {
     toggleWordList();
 }
 
+function showDrakeWords() {
+    const wordListContent = document.getElementById('word-list-content');
+    
+    const drakeWords = LEXICON.DRAKE_LEXICON_WORDS;
+    
+    let html = '<h3>🎯 Drake Anchor Words (Commercial Lexicon)</h3>';
+    html += '<p class="word-list-hint">Use 3+ of these for baseline, 5+ for mastery. These words create instant thematic recognition and commercial accessibility.</p>';
+    
+    html += `
+        <div class="word-category">
+            <h4>HIGH-IMPACT ANCHORS (Need 3 minimum, 5 for max points)</h4>
+            <div class="word-chips">
+                ${drakeWords.map(w => `<span class="word-chip" style="background-color: var(--color-accent-light); color: #78350f; font-weight: 600;">${w}</span>`).join('')}
+            </div>
+        </div>
+    `;
+    
+    html += `
+        <div class="word-category" style="margin-top: var(--space-lg);">
+            <h4>WHY THESE WORDS?</h4>
+            <ul style="font-size: 0.875rem; color: var(--color-text-secondary); line-height: 1.6;">
+                <li><strong>time</strong> - Universal urgency, fleeting moments, deadlines</li>
+                <li><strong>love</strong> - Emotional anchor, relatable to everyone</li>
+                <li><strong>god</strong> - Higher power, faith, destiny</li>
+                <li><strong>plan</strong> - Purpose, strategy, ambition</li>
+                <li><strong>city</strong> - Place, belonging, origin story</li>
+                <li><strong>team</strong> - Loyalty, crew, brotherhood</li>
+                <li><strong>real</strong> - Authenticity, genuine vs fake</li>
+                <li><strong>yeah</strong> - Affirmation, confidence, swagger</li>
+                <li><strong>bottom</strong> - Struggle, humble beginnings</li>
+                <li><strong>top</strong> - Success, winning, apex</li>
+                <li><strong>trust</strong> - Reliability, loyalty test</li>
+                <li><strong>loyal</strong> - Faithfulness, ride or die</li>
+                <li><strong>ride</strong> - Journey, support, being there</li>
+                <li><strong>day/night</strong> - Time markers, duality, contrast</li>
+            </ul>
+        </div>
+    `;
+    
+    html += `
+        <div class="word-category" style="margin-top: var(--space-lg); background-color: var(--color-warning-bg); padding: var(--space-md); border-radius: var(--radius-md);">
+            <h4 style="color: #78350f;">⚠️ USE NATURALLY</h4>
+            <p style="font-size: 0.875rem; color: #78350f;">
+                Don't force these words. They should emerge organically from your story. 
+                A line like "no message from him all <strong>day</strong>" uses "day" naturally. 
+                Spamming "time time time" will hurt your song quality even if it boosts your score.
+            </p>
+        </div>
+    `;
+    
+    wordListContent.innerHTML = html;
+    toggleWordList();
+}
+
 // ============================================
 // SCORING ENGINE (V5.0 - SEMANTIC INTELLIGENCE)
 // ============================================
