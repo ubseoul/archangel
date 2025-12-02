@@ -1,4 +1,4 @@
-/ /data/lexicon.js (V5.0 - Semantic Intelligence Engine)
+//data/lexicon.js (V5.0 - Semantic Intelligence Engine)
 
 const LEXICON = {
     // ============================================
