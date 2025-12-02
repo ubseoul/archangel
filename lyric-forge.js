@@ -1,9 +1,9 @@
-// lyric-forge.js (Finalized V5.0 - Final Synthesis Engine)
+// lyric-forge.js (Finalized V5.0 - Final Strategy Guide Overhaul)
 
 let currentChallenge = null;
 let savedProgress = JSON.parse(localStorage.getItem('lyricForgeProgress')) || [];
 
-// --- A. Utility Functions ---
+// --- A. Utility Functions (Unchanged) ---
 
 function estimateSyllables(word) {
     word = word.toLowerCase().replace(/[^a-z]/g, '');
@@ -80,12 +80,12 @@ function toggleInfo() {
     document.getElementById('info-section').classList.toggle('active');
 }
 
-// --- C. Challenge Definitions & Setup ---
+// --- C. Challenge Definitions & Setup (Unchanged) ---
 
 const CHALLENGES = {
     drake_structure: {
         title: "🎤 Synthesis Drill: Melodic Flow (F-Score)",
-        prompt: "Write 28 non-empty lines (Chorus-Verse-Chorus). **Strictly target 5-7 Syl/Line** to master Melodic Accessibility. Select a mood and motif for the Dual Constraint.",
+        prompt: "Write 28 non-empty lines (Chorus-Verse-Chorus). Select a mood and motif to provide contextual imagery.",
         scoreType: 'F',
         targetLines: 28,
         moodRequired: true,
@@ -119,36 +119,45 @@ function startChallenge(type) {
     showView('challenge-view');
 }
 
+// --- Strategy Guide Content (Overhaul) ---
 const INFO_CONTENT = {
     drake_structure: {
         content: `
-            <h4>Structure Strategy: The Sandwich Method (F-Score Value)</h4>
+            <h4>🎯 Goal: 100% Commercial Accessibility (The Drake Protocol)</h4>
+            <p>The Synthesis Drill is your flow bootcamp. It forces you to overcome your natural density ($\mathbf{9.0+}$ Syl/Line) and adopt the Melodic/Conversational style required for mainstream success.</p>
+
+            <h4 style="color: var(--color-fail);">Non-Negotiable Failure Points (The 70% Wall)</h4>
+            <ol>
+                <li>**❌ Flow Failure:** Your density must be $\mathbf{7.0}$ Syl/Line or below. If you fail this, you lose $\mathbf{20}$ points. This is the rhythmic skill you must master.</li>
+                <li>**❌ Structural Failure:** Your line count must be $\mathbf{24-32}$ (aim for 28). Violations lose $\mathbf{35}$ points.</li>
+            </ol>
+
+            <h4>Melodic Accessibility Strategy (How to Hit $\mathbf{100\%}$)</h4>
             <ul>
-                <li>**Action:** Aim for short verses (max 12 lines) to keep the hook frequency high. This maximizes commercial viability.</li>
-                <li>**Dual Constraint:** Use your selected Motif (Car/Color/Time) frequently to ground the accessible topic in specific, Ocean-style imagery.</li>
+                <li>**Action 1: Master Syllable Economy.** Rewrite your lines so they are visually sparse. Target $\mathbf{5}$ to $\mathbf{6}$ syllables per line to ensure the estimator reads $\mathbf{\leq 7.0}$ Syl/Line.</li>
+                <li>**Action 2: The Final Rhyme.** Ensure your last $\mathbf{4}$ lines form a strict $\text{AABB}$ couplet to train structural discipline.</li>
+                <li>**Action 3: Anchor Your Theme.** Integrate $\mathbf{\ge 3}$ words from the Drake Lexicon ($\text{team, time, top, real}$) to guarantee thematic clarity.</li>
             </ul>
-            <h4>Flow Strategy: Melodic Accessibility (The $\mathbf{5-7}$ Syl/Line Rule)</h4>
-            <ul>
-                <li>**Insight:** Your natural flow is $\mathbf{9.0+}$ Syl/Line. To achieve $\mathbf{100\%}$ F-Score, you **must** edit down your words until the Flow Status reads $\mathbf{5.0 - 7.0}$ Syl/Line. This trains **Syllable Economy**.</li>
-            </ul>
+            <p style="margin-top: 15px;">**DUAL CONSTRAINT VALUE:** By integrating your specific imagery (wagyu, honeycomb), you are grounding the commercial structure in poetic texture, making your hits feel authentic.</p>
         `
     },
     ocean_poetics: {
         content: `
-            <h4>Lexical Specificity (P-Score Value)</h4>
+            <h4>🎯 Goal: 100% Poetic Intimacy (The Ocean Methodology)</h4>
+            <p>This drill validates your ability to create layered, high-texture imagery—your greatest natural strength.</p>
+
+            <h4 style="color: var(--color-primary);">Strategy: Show, Don't Tell (The Specificity Filter)</h4>
             <ul>
-                <li>**STRICT PENALTY:** The tool will penalize you heavily for using Abstract Nouns (e.g., sadness, passion).</li>
-                <li>**Action:** Replace abstract words with **concrete imagery** (e.g., swap 'sadness' for 'cold texture' or 'oil marks').</li>
+                <li>**Action 1: Avoid the Abstract Trap.** You **MUST NOT** use more than one word from the $\text{ABSTRACT\_NOUNS}$ list (e.g., sadness, passion). **Swap** 'sadness' for 'cold texture,' 'scars,' or 'shadows.'</li>
+                <li>**Action 2: Enforce Imagery Density.** Use $\mathbf{\ge 3}$ words from your personalized $\text{CONCRETE\_REPLACERS}$ list ($\text{wagyu, provolone, marble}$) to create textural cohesion.</li>
+                <li>**Action 3: Structural Subversion.** Avoid choruses and repeating lines to maintain a **Linear Narrative Path**. This maximizes complexity and replay value.</li>
             </ul>
-            <h4>Narrative Strategy: Structural Subversion</h4>
-            <ul>
-                <li>**Value:** This creates layers of meaning and intimacy. **Action:** Avoid repeating any line longer than 5 words. The lyric must move linearly from A to B.</li>
-            </ul>
+            <p style="margin-top: 15px;">**THE ULTIMATE TEST:** The Forge measures if you can achieve poetic mastery *without* relying on emotional crutches or predictable structure.</p>
         `
     }
 };
 
-// --- D. Core Scoring Logic ---
+// --- D. Core Scoring Logic (Unchanged in V5.0) ---
 
 function submitLyric() {
     const lyric = document.getElementById('lyric-input').value;
@@ -193,8 +202,11 @@ function scoreSynthesisDrill(lines, mood, motif, feedback) {
     let pScore = 0;
     const lyricText = lines.join(' ').toLowerCase();
 
+    // Calculate Syl/Line Average (Needed for Flow Scoring)
     const avgSylPerLine = lines.length > 0 ? lines.join(' ').split(/\s+/).reduce((sum, word) => sum + estimateSyllables(word), 0) / lines.length : 0;
     const T = LEXICON.FLOW_SYLLABLE_THRESHOLDS;
+    
+    // --- F-Score Primary Checks (Max 100 points) ---
     
     // 1. F-Score: Structural Compliance (Max 40 points)
     const structureConstraint = CHALLENGES.drake_structure.targetLines;
@@ -214,7 +226,7 @@ function scoreSynthesisDrill(lines, mood, motif, feedback) {
         fScore += 30;
         feedback.push({ type: 'success', scoreType: 'F', text: `💡 Lexicon: Used ${drakeWordsFound} high-impact lexicon words. Good anchoring.` }); 
     } else {
-        fScore += 5; // Minimal credit for trying
+        fScore += 5; 
         feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Lexicon: Only used ${drakeWordsFound} lexicon words. **Action:** Incorporate at least 3 high-impact words (e.g., time, team, top).` });
     }
 
@@ -225,13 +237,13 @@ function scoreSynthesisDrill(lines, mood, motif, feedback) {
         fScore += 30;
         feedback.push({ type: 'success', scoreType: 'F', text: `🥁 Flow: Achieved Conversational Flow (${avgSylPerLine.toFixed(1)} Syl/Line). Perfect for melodic delivery. (30 points)` });
     } else if (avgSylPerLine >= T.CONVERSATIONAL_MAX + 0.1 && avgSylPerLine <= T.TRIPLET_MAX + 0.1) {
-         // Partial Pass: Consistent Dense Flow (7.1 - 11.1 Syl) - Reward consistency, but mark failure to hit target
-        fScore += 10; // Reduced to 10 points to enforce stricter Melodic target
+         // Partial Pass: Consistent Dense Flow (7.1 - 11.1 Syl) - Mark as suboptimal and award partial credit
+        fScore += 10; // Reduced credit to emphasize Melodic target failure
         feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: Density (${avgSylPerLine.toFixed(1)} Syl/Line) is too high. **Action:** To maximize score, ruthlessly edit syllables down to $\mathbf{5-7}$ Syl/Line.` });
     } else {
-        // Fail: Unstable Flow or density outside 5-11.1 range
+        // Fail: Unstable Flow or density outside both target zones
         fScore += 0;
-        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: Density (${avgSylPerLine.toFixed(1)} Syl/Line) is unstable or too high. **Action:** Aim for 5-7 Syl/Line to achieve a relaxed, conversational rhythm.` });
+        feedback.push({ type: 'fail', scoreType: 'F', text: `❌ Flow: Density (${avgSylPerLine.toFixed(1)} Syl/Line) is too high/low. **Action:** Aim for 5-7 Syl/Line to achieve a relaxed, conversational rhythm.` });
     }
 
 
