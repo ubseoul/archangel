@@ -5,177 +5,235 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>The Gemini Lyric Forge V5.0</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Specific Styles for Info Panel (Minimalist) */
-        .info-panel {
-            background-color: #f0f7ff; 
-            border: 1px solid #c8d9e6;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 8px;
-            font-size: 0.9em;
-            line-height: 1.4;
-            display: none; 
-        }
-        .info-panel.active { display: block; }
-        .info-panel h4 { margin-top: 0; color: #1e3a8a; font-size: 1.1em; border-bottom: 1px dashed #d1d5db; padding-bottom: 5px; }
-        .info-panel ul { padding-left: 20px; }
-        .info-panel li { margin-bottom: 5px; }
-        .info-toggle { background: none; border: none; color: #1e3a8a; font-weight: bold; text-decoration: underline; cursor: pointer; padding: 5px 0; display: block; text-align: right; }
-        
-        /* Table Styling for Lexicon */
-        .lexicon-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 0.9em;
-        }
-        .lexicon-table th, .lexicon-table td {
-            border: 1px solid #e5e7eb;
-            padding: 6px;
-            text-align: left;
-        }
-        .lexicon-table th {
-            background-color: #eef2ff;
-            color: var(--color-primary);
-        }
-        .lexicon-list {
-            font-family: monospace;
-            font-weight: 600;
-            color: #b91c1c; /* Red for high focus */
-            word-break: break-all;
-        }
-    </style>
+    <!-- Optional: html2canvas for image export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
     <div class="container">
-        <h1>♊ The Gemini Lyric Forge V5.0</h1>
-        <p class="app-subtitle">Engineered Synthesis: Drake's Structure meets Ocean's Poetry</p>
+        <h1>♊ The Gemini Lyric Forge</h1>
+        <p class="app-subtitle">V5.0 - Synthesis Mastery Engine</p>
         
+        <!-- ============================================
+             DASHBOARD VIEW
+             ============================================ -->
         <div id="dashboard-view" class="view active">
             
-            <div class="card" style="border-left: 5px solid #000; padding: 15px;">
-                <h2 style="color: #000; font-size: 1.5em; text-align: center;">👑 MAX SCORE MASTERY GUIDE</h2>
-                <p class="text-center">To achieve 100% Synthesis Mastery, you must pass all checks in both domains.</p>
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">F-Score Avg</div>
+                    <div class="stat-value" id="avg-f-score">0%</div>
+                </div>
+                <div class="stat-card ocean">
+                    <div class="stat-label">P-Score Avg</div>
+                    <div class="stat-value" id="avg-p-score">0%</div>
+                </div>
             </div>
             
-            <!-- F-SCORE IN-DEPTH SECTION -->
-            <div class="card card-accent" style="margin-top: 10px;">
-                <h3 style="color: var(--color-primary); font-size: 1.3em;">Structure & Flow (F-SCORE: Commercial Viability)</h3>
-                <p>The goal is **Melodic Accessibility**. Your final 30 points depend on beating your 9.0+ Syl/Line habit.</p>
+            <!-- Challenge Selection -->
+            <div class="card card-accent">
+                <h2>🎯 Daily Challenges</h2>
+                <p class="text-muted">Choose your training focus for today:</p>
                 
-                <h4 style="color: var(--color-primary); margin-top: 10px;">A. Flow Quality Check (30 Points)</h4>
-                <ul>
-                    <li><strong>Action:</strong> Use **Monosyllabic Economy**. Edit every word until your Flow Status reads 7.0 Syl/Line. This is the only range that grants full points.</li>
-                </ul>
-
-                <h4 style="color: var(--color-primary); margin-top: 10px;">B. Lexicon Targets & Discipline (70 Points)</h4>
-                <ul>
-                    <li><strong>Line Count:</strong> Hit the 8/12/8 line count 28 lines for maximum Hook Frequency.</li>
-                    <li><strong>Discipline Constraint:</strong> End your final 4 lines with a strict AABB couplet.</li>
-                </ul>
+                <button class="drake-btn" onclick="startChallenge('drake_structure')">
+                    🎤 Melodic Flow Drill (F-Score)
+                </button>
                 
-                <table class="lexicon-table">
-                    <thead>
-                        <tr><th colspan="2">DRAKE'S HIGH-IMPACT LEXICON (Need 3 words)</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Words:</td><td class="lexicon-list">time, love, god, plan, city, team, real, yeah, bottom, top</td></tr>
-                    </tbody>
-                </table>
+                <button class="ocean-btn" onclick="startChallenge('ocean_poetics')">
+                    🌊 Poetic Depth Workout (P-Score)
+                </button>
             </div>
-
-            <!-- P-SCORE IN-DEPTH SECTION -->
-            <div class="card card-accent" style="border-left-color: #f472b6;">
-                <h3 style="color: #f472b6; font-size: 1.3em;">Poetry & Specificity (P-SCORE: Narrative Depth)</h3>
-                <p>The goal is **Cohesive Metaphor**—grounding emotion in your unique, specific imagery.</p>
-                
-                <h4 style="color: #f472b6; margin-top: 10px;">A. Lexical Purity Check (40 Points)</h4>
-                <ul>
-                    <li><strong>Zero Tolerance Rule:</strong> Do not use more than one **Abstract Noun**.</li>
+            
+            <!-- Quick Reference Card -->
+            <div class="card">
+                <h2>📚 Quick Reference</h2>
+                <p class="text-muted">Stricter scoring thresholds (V5.0):</p>
+                <ul style="font-size: 0.875rem; color: var(--color-text-secondary); line-height: 1.8;">
+                    <li><strong>F-Score:</strong> 5-7 syl/line, 28 lines, 3+ anchor words</li>
+                    <li><strong>P-Score:</strong> 0-1 abstracts max, 5+ concrete nouns, 5+ motif words</li>
+                    <li><strong>Synthesis:</strong> (F × P) = 85%+ for mastery</li>
                 </ul>
-                <table class="lexicon-table">
-                    <thead>
-                        <tr><th>PENALIZED WORDS</th><th>HIGH-VALUE REPLACERS 3 needed</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>sadness, anger, feeling, passion, trust, anxiety, joy, truth</td>
-                        <td class="lexicon-list">wagyu, toblerone, honeycomb, provolone, scars, shadows, texture, crystal</td></tr>
-                    </tbody>
-                </table>
-
-                <h4 style="color: #f472b6; margin-top: 10px;">B. Cohesion & Imagery (60 Points)</h4>
-                <ul>
-                    <li><strong>Action:</strong> Ensure your selected **Mood** (Positive/Negative) is linked to your **Motif** (Car/Color/Time) with high density 3 sentiment words and 2 motif words).</li>
-                    <li><strong>Narrative Subversion:</strong> Avoid repetition. Maintain a linear narrative path for critical intimacy.</li>
-                </ul>
-            </div>
-
-
-            <div class="module-selector card card-accent">
-                <h2>✍️ Start Daily Challenge</h2>
-                <button class="drake-btn" onclick="startChallenge('drake_structure')">🎯 Synthesis Drill: Melodic Flow (F-Score)</button>
-                <button class="ocean-btn" onclick="startChallenge('ocean_poetics')">🌊 Poetic Workout: Depth (P-Score)</button>
             </div>
         </div>
 
+        <!-- ============================================
+             CHALLENGE VIEW (WRITING INTERFACE)
+             ============================================ -->
         <div id="challenge-view" class="view">
-            <h2 id="challenge-title"></h2>
-            <p id="challenge-prompt" class="prompt"></p>
-            
-            <button class="info-toggle" onclick="toggleInfo()">ℹ️ Strategy Guide</button> 
-            <div id="info-section" class="info-panel">
-                 <!-- The older detailed guide will load here when the button is pressed -->
+            <div class="card">
+                <h2 id="challenge-title"></h2>
+                <p id="challenge-prompt" style="color: var(--color-text-secondary);"></p>
+                
+                <button class="info-toggle" onclick="toggleInfo()">ℹ️ Strategy Guide</button>
+                <div id="info-section" class="info-panel">
+                    <h4>Synthesis Strategy</h4>
+                    <ul>
+                        <li><strong>Flow:</strong> Target 5-7 syllables per line for melodic accessibility</li>
+                        <li><strong>Structure:</strong> 28 lines (8/12/8) for commercial hook frequency</li>
+                        <li><strong>Lexicon:</strong> Use 3+ Drake anchor words (time, team, top, real)</li>
+                        <li><strong>Imagery:</strong> Replace abstractions with concrete sensory details</li>
+                        <li><strong>Motif:</strong> Sustain your chosen motif with 5+ related words</li>
+                    </ul>
+                </div>
             </div>
             
+            <!-- Live Metrics Panel (Sticky) -->
+            <div class="live-metrics">
+                <h3>📊 Live Analysis</h3>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-label">Lines</div>
+                        <div class="metric-value status-progress" id="line-count">0</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="line-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Flow</div>
+                        <div class="metric-value status-progress" id="syl-count">0.0</div>
+                        <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 2px;" id="flow-type">--</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Anchors</div>
+                        <div class="metric-value status-progress" id="drake-count">0</div>
+                        <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 2px;">need 3+</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Abstracts</div>
+                        <div class="metric-value status-progress" id="abstract-count">0</div>
+                        <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 2px;">max 1</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Concrete</div>
+                        <div class="metric-value status-progress" id="concrete-count">0</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="concrete-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Motif</div>
+                        <div class="metric-value status-progress" id="motif-count">0</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="motif-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contextual Warnings -->
+            <div id="contextual-warnings">
+                <!-- Warnings populate here dynamically -->
+            </div>
+            
+            <!-- Metadata Inputs -->
             <div class="metadata-inputs">
-                <!-- Dropdowns are necessary for P-Score context -->
                 <select id="input-mood">
-                    <option value="" disabled selected>Goal Mood (P-Score Context)</option>
+                    <option value="" disabled selected>Goal Mood</option>
                     <option value="NEGATIVE">Sad/Melancholy/Conflict</option>
                     <option value="POSITIVE">Ambitious/Confident</option>
                     <option value="NEGATIVE">Nostalgic/Regretful</option>
                 </select>
                 <select id="input-motif">
-                    <option value="" disabled selected>Core Motif (P-Score Imagery)</option>
-                    <option value="CAR">Car/Vehicle (Speed/Journey)</option>
-                    <option value="COLOR">Color (Vivid/Emotional Palette)</option>
-                    <option value="TIME">Time (Nostalgia/Aging)</option>
+                    <option value="" disabled selected>Core Motif</option>
+                    <option value="CAR">🚗 Car (Journey/Speed)</option>
+                    <option value="COLOR">🎨 Color (Vivid Palette)</option>
+                    <option value="TIME">⏰ Time (Memory/Aging)</option>
+                    <option value="WATER">🌊 Water (Flow/Depth)</option>
                 </select>
             </div>
             
-            <div class="writing-area">
-                <textarea id="lyric-input" placeholder="Start typing your seamless lyric here... (No special markers needed)"></textarea>
-                <div class="status-bar">
-                    <div id="line-status">Lines: <span id="line-count">0</span></div>
-                    <div id="syl-status">Flow Density: <span id="syl-count">0</span> Syl/Line</div>
-                    <div id="flow-status">Flow Style: <span id="flow-type">--</span></div>
+            <!-- Word Bank Buttons -->
+            <div class="help-buttons">
+                <button class="help-btn" onclick="showMotifWords()">📘 Motif Words</button>
+                <button class="help-btn" onclick="showConcreteWords()">🎨 Concrete List</button>
+                <button class="help-btn" onclick="showAbstractWords()">🚫 Avoid These</button>
+            </div>
+            
+            <!-- Writing Area -->
+            <div class="writing-container">
+                <div id="highlight-overlay"></div>
+                <textarea 
+                    id="lyric-input" 
+                    placeholder="Start writing your lyric here... (The tool will highlight abstracts in red, concrete nouns in green, and motif words in blue as you type)"
+                    spellcheck="false"
+                ></textarea>
+            </div>
+            
+            <button id="submit-btn" onclick="submitLyric()">✨ Analyze & Score</button>
+            <button class="secondary" onclick="showView('dashboard-view')">← Back to Dashboard</button>
+        </div>
+
+        <!-- ============================================
+             RESULTS VIEW (SCORE REPORT)
+             ============================================ -->
+        <div id="results-view" class="view">
+            <div class="card card-success">
+                <h2>📊 Session Report Card</h2>
+                
+                <!-- Score Display -->
+                <div class="score-grid">
+                    <div class="score-card-item">
+                        <div class="score-label-big">F-Score</div>
+                        <div class="score-value-big" id="f-score">0</div>
+                        <div class="score-subtitle">Commercial Viability</div>
+                    </div>
+                    <div class="score-card-item p-score">
+                        <div class="score-label-big">P-Score</div>
+                        <div class="score-value-big" id="p-score">0</div>
+                        <div class="score-subtitle">Narrative Depth</div>
+                    </div>
+                    <div class="score-card-item synthesis">
+                        <div class="score-label-big">Synthesis Score</div>
+                        <div class="score-value-big"><span id="synthesis-score">0</span>%</div>
+                        <div class="score-subtitle">F × P Mastery</div>
+                    </div>
+                </div>
+                
+                <!-- Feedback -->
+                <h3 style="margin-top: var(--space-xl);">💬 Prescriptive Feedback</h3>
+                <ul id="feedback-list"></ul>
+                
+                <!-- Action Buttons -->
+                <div style="margin-top: var(--space-xl);">
+                    <button onclick="saveAndShare()">📸 Export Score Card (Image)</button>
+                    <button class="secondary" onclick="showView('dashboard-view')">🔄 New Challenge</button>
                 </div>
             </div>
             
-            <button id="submit-btn" onclick="submitLyric()">Analyze & Score</button>
-            <button class="secondary" onclick="showView('dashboard-view')">Cancel</button>
-        </div>
-
-        <div id="results-view" class="view">
-            <h2 class="card-success">✅ Session Report Card</h2>
-            
-            <div class="score-card">
-                <div class="score-box f-score-box">F-Score (Structure): <strong id="f-score">0</strong>/100</div>
-                <div class="score-box p-score-box">P-Score (Poetry): <strong id="p-score">0</strong>/100</div>
-            </div>
-
-            <h3>Prescriptive Feedback:</h3>
-            <ul id="feedback-list"></ul>
-
-            <div class="text-center">
-                <button onclick="saveAndShare()">💾 Export Daily Report (PDF/Image)</button>
-                <button class="secondary" onclick="showView('dashboard-view')">New Challenge</button>
+            <!-- Hidden export card for image generation -->
+            <div id="export-card" style="display: none;">
+                <h2 style="color: white; margin-bottom: var(--space-md);">♊ THE GEMINI FORGE</h2>
+                <div class="score-grid">
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 4px;">F-SCORE</div>
+                        <div style="font-size: 3rem; font-weight: 800;" id="export-f-score">0</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 4px;">P-SCORE</div>
+                        <div style="font-size: 3rem; font-weight: 800;" id="export-p-score">0</div>
+                    </div>
+                </div>
+                <div style="margin-top: var(--space-lg); font-size: 1.25rem;">
+                    Synthesis: <strong id="export-synthesis">0</strong>%
+                </div>
+                <div style="margin-top: var(--space-md); font-size: 0.875rem; opacity: 0.9;" id="export-date"></div>
+                <div style="margin-top: var(--space-sm); font-size: 0.75rem; opacity: 0.8;">Semantic Intelligence Engine</div>
             </div>
         </div>
     </div>
     
+    <!-- ============================================
+         WORD LIST OVERLAY PANEL
+         ============================================ -->
+    <div id="word-list-panel">
+        <div id="word-list-content">
+            <!-- Content populated by JS -->
+        </div>
+        <button class="secondary close-panel-btn" onclick="toggleWordList()">✕ Close</button>
+    </div>
+    
+    <!-- Scripts -->
     <script src="./data/lexicon.js"></script>
     <script src="lyric-forge.js"></script>
 </body>
